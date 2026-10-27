@@ -1,5 +1,5 @@
 import { audit } from "./audit";
-import { aiConfigured, extractClaims } from "./ai";
+import { aiConfigured, aiModel, aiProvider, extractClaims } from "./ai";
 import { verifyClaims } from "./claims";
 import { runRules, type RawFinding } from "./rules";
 import { db, newId, nowIso, todayIso } from "./store";
@@ -62,7 +62,7 @@ export async function runCheck(draft: Draft, actor: Pick<User, "name" | "role">)
         aiFindings = v.findings;
         rejected = v.rejected;
         ai = "used";
-        note = `AI-assisted check. ${claims.length} claim${claims.length === 1 ? "" : "s"} proposed by the AI${rejected ? `, ${rejected} rejected because the quote was not in the draft` : ""}; every verdict was verified by code.`;
+        note = `AI-assisted check (${aiProvider()}, ${aiModel()}). ${claims.length} claim${claims.length === 1 ? "" : "s"} proposed by the AI${rejected ? `, ${rejected} rejected because the quote was not in the draft` : ""}; every verdict was verified by code.`;
       } catch (e) {
         ai = "failed";
         note = `Rules-only check (the AI step failed: ${e instanceof Error ? e.message : "unknown error"}).`;
