@@ -61,6 +61,17 @@ async function post(url: string, headers: Record<string, string>, body: unknown)
   });
 }
 
+/** Short, safe error text from a provider's JSON error body (never contains our key). */
+async function apiMessage(res: Response): Promise<string> {
+  try {
+    const j = (await res.json()) as { error?: { message?: string } };
+    const m = j.error?.message;
+    return m ? `: ${m.replace(/\s+/g, " ").slice(0, 140)}` : "";
+  } catch {
+    return "";
+  }
+}
+
 async function callGemini(text: string, facts: Fact[], key: string): Promise<string> {
   const base = process.env.AI_BASE_URL || "https://generativelanguage.googleapis.com";
   const models = Array.from(new Set([aiModel(), "gemini-flash-latest"]));
@@ -75,7 +86,7 @@ async function callGemini(text: string, facts: Fact[], key: string): Promise<str
       lastErr = `model ${model} not found`;
       continue;
     }
-    if (!res.ok) throw new Error(`Gemini returned HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Gemini returned HTTP ${res.status}${await apiMessage(res)}`);
     const json = (await res.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
@@ -98,7 +109,7 @@ async function callOpenAi(text: string, facts: Fact[], key: string): Promise<str
       { role: "user", content: userPrompt(text, facts) },
     ],
   });
-  if (!res.ok) throw new Error(`The AI service returned HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`The AI service returned HTTP ${res.status}${await apiMessage(res)}`);
   const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const reply = json.choices?.[0]?.message?.content;
   if (!reply) throw new Error("The AI service returned an empty reply");
@@ -114,7 +125,7 @@ async function callAnthropic(text: string, facts: Fact[], key: string): Promise<
     system: SYSTEM,
     messages: [{ role: "user", content: userPrompt(text, facts) }],
   });
-  if (!res.ok) throw new Error(`Anthropic returned HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`Anthropic returned HTTP ${res.status}${await apiMessage(res)}`);
   const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
   const reply = (json.content ?? []).map((b) => (b.type === "text" ? b.text ?? "" : "")).join("");
   if (!reply) throw new Error("Anthropic returned an empty reply");
