@@ -68,7 +68,7 @@ Without `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, ProofLine uses an in-mem
 
 ## Tests
 
-- `npm test` runs 18 unit tests (rules, fix application, claim verification, AI-reply parsing).
+- `npm test` runs 23 unit tests (rules, fix application, claim verification, AI-reply parsing).
 - `python3 tests/e2e.py <url>` drives a real browser through the whole path: check, blocked submit, fix, dispute, review, approve, admin changes a fact, audit trail, report, session isolation and mobile layout. `node tests/mock-ai.mjs` plus `python3 tests/e2e.py <url> ai` tests the AI path against a local stand-in for the model.
 
 ## Known limits (honest list)

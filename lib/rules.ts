@@ -73,7 +73,7 @@ function clauseAt(text: string, index: number): string {
   const sentence = sentenceAt(text, index);
   const start = text.indexOf(sentence);
   const pos = start >= 0 ? index - start : 0;
-  const cut = /,|;|\band\b|\bbut\b/gi;
+  const cut = /(?<!\d),|,(?!\d)|;|\band\b|\bbut\b/gi;
   let from = 0;
   let to = sentence.length;
   for (const m of sentence.matchAll(cut)) {
@@ -88,15 +88,29 @@ function clauseAt(text: string, index: number): string {
   return clause || sentence;
 }
 
+/** True when the claim contains a number that the fact does not contain (so it cannot be the same figure). */
+function numbersDiffer(claim: string, factStatement: string): boolean {
+  const nums = (t: string) => (t.match(/\d[\d,.]*/g) ?? []).map((n) => n.replace(/[,.]+$/g, "").replace(/,/g, ""));
+  const have = new Set(nums(factStatement));
+  const want = nums(claim);
+  return want.length > 0 && want.some((n) => !have.has(n));
+}
+
+/** Splits "a,b,50,000" into ["a","b","50,000"]: commas inside numbers are kept. */
+export function splitKeywords(raw: string): string[] {
+  return raw
+    .split(/(?<!\d),|,(?!\d)/)
+    .map((k) => k.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export function matchFact(sentence: string, facts: Fact[]): Fact | null {
   const s = sentence.toLowerCase();
   let best: { fact: Fact; score: number } | null = null;
   for (const fact of facts) {
-    const keys = fact.keywords
-      .split(",")
-      .map((k) => k.trim().toLowerCase())
-      .filter(Boolean);
-    const score = keys.filter((k) => s.includes(k)).length;
+    const keys = splitKeywords(fact.keywords);
+    // keywords match from the start of a word, so "hydrat" finds "hydration" but "pet" does not find "competitors"
+    const score = keys.filter((k) => new RegExp(`(?<![\\w])${esc(k)}`).test(s)).length;
     if (score > 0 && (!best || score > best.score)) best = { fact, score };
   }
   return best ? best.fact : null;
@@ -112,13 +126,15 @@ const ABSOLUTES: Array<{ re: RegExp; fix: FixKind; why: string }> = [
 ];
 
 // --- R-4: claims that need an approved fact (G-2 / G-6) -----------------------
-const CLAIM_PATTERNS: Array<{ kind: string; label: string; re: RegExp; severity: Severity; guideline: string }> = [
+const CLAIM_PATTERNS: Array<{ kind: string; label: string; re: RegExp; severity: Severity; guideline: string; factFilter?: RegExp }> = [
   {
     kind: "ranking",
     label: "Ranking",
     re: /(?:#\s?1(?!\d)|\bno\.?\s?1\b|\bnumber[- ]one\b|\bbest[- ]selling\b|\bworld'?s best\b|\bbest in (?:the )?(?:world|india|class)\b|\bindia'?s (?:best|favou?rite|leading)\b|\bleading brand\b|\btop[- ]rated\b)/gi,
     severity: "high",
     guideline: "G-6",
+    // only a ranking fact can support a ranking claim
+    factFilter: /\brank|#1|number one|best-selling|leading|top-rated|category/i,
   },
   {
     kind: "proof",
@@ -126,20 +142,23 @@ const CLAIM_PATTERNS: Array<{ kind: string; label: string; re: RegExp; severity:
     re: /\b(?:clinically|scientifically|dermatologically)\s+(?:proven|tested|approved)\b|\bdoctor[- ]recommended\b|\baward[- ]winning\b|\bproven\b/gi,
     severity: "high",
     guideline: "G-2",
+    // only a test, certificate, award or endorsement fact can support a proof claim
+    factFilter: /\btested|trial|study|certif|award|recommended|approved|proven/i,
   },
   {
     kind: "number",
     label: "Numeric",
-    re: /\b\d[\d,.]*\s?%|\b(?:more than|over|up to|upto)\s+\d[\d,]*\+?(?:\s+\w+)?|\b\d[\d,]*\+?\s+(?:million|lakh|crore|thousand)?\s*(?:customers|users|people|athletes|stores|bottles|reviews)\b/gi,
+    re: /\b\d[\d,.]*\s?%|\b\d+\s+(?:in|out of)\s+\d+\b|\b(?:more than|over|up to|upto)\s+\d[\d,]*\+?(?:\s+\w+)?|\b\d[\d,]*\+?\s+(?:million|lakh|crore|thousand)?\s*(?:customers|users|people|athletes|stores|bottles|reviews)\b/gi,
     severity: "medium",
     guideline: "G-2",
   },
   {
     kind: "comparison",
     label: "Comparison",
-    re: /\b(?:better|faster|stronger|healthier|tastier|cheaper)\s+than\b|\boutperforms?\b/gi,
+    re: /\b(?:better|faster|stronger|healthier|tastier|cheaper)\s+than\b|\boutperforms?\b|\bover (?:a |the )?(?:leading |other )?(?:rivals?|competitors?|brands?)\b/gi,
     severity: "medium",
     guideline: "G-6",
+    factFilter: /rival|prefer|\bthan\b|compar/i,
   },
 ];
 
@@ -205,6 +224,30 @@ export function runRules(ctx: RuleContext): RawFinding[] {
       },
       m.index ?? 0,
     );
+  }
+  const HEALTH_EXTRA = [
+    { re: /\b(?:boosts?|strengthens?|improves?|supports?)\s+(?:your\s+)?(?:immunity|immune system)\b/gi, why: "Immunity wording is a health claim. AquaPulse is a sports drink and can't claim to affect immunity." },
+    { re: /\b(?:lose|burn|shed)\s+\d+\s*(?:kg|kgs|kilos?|pounds|lbs)\b|\bweight[- ]loss\b/gi, why: "Weight-loss wording is a health claim that AquaPulse can't support." },
+  ];
+  for (const h of HEALTH_EXTRA) {
+    for (const m of text.matchAll(h.re)) {
+      push(
+        {
+          rule_id: "R-3",
+          severity: "high",
+          verdict: "rule",
+          title: "R-3 · Medical or cure wording",
+          quote: m[0],
+          reason: h.why,
+          source_ref: "G-4",
+          source_text: guidelineText(ctx.guidelines, "G-4"),
+          fix_kind: "remove",
+          suggestion: "",
+          origin: "rule",
+        },
+        m.index ?? 0,
+      );
+    }
   }
   for (const m of text.matchAll(/\b(?:miracle|detox\w*)\b/gi)) {
     push(
@@ -310,10 +353,15 @@ export function runRules(ctx: RuleContext): RawFinding[] {
       for (const m of text.matchAll(p.re)) {
         const idx = m.index ?? 0;
         if (used.overlaps(idx, idx + m[0].length)) continue;
-        const fact = matchFact(clauseAt(text, idx), ctx.facts);
+        const pool = p.factFilter ? ctx.facts.filter((f) => p.factFilter!.test(p.kind === "ranking" ? f.keywords : `${f.statement} ${f.keywords}`)) : ctx.facts;
+        const fact = matchFact(clauseAt(text, idx), pool);
+        const differs = fact ? numbersDiffer(m[0], fact.statement) : false;
         let verdict: "supported" | "unsupported" | "outdated";
         let reason: string;
-        if (fact && !isExpired(fact, ctx.today)) {
+        if (fact && differs) {
+          verdict = "unsupported";
+          reason = `This differs from approved fact ${fact.id}: "${fact.statement}" Use the approved figure or remove the claim.`;
+        } else if (fact && !isExpired(fact, ctx.today)) {
           verdict = "supported";
           reason = `Matches approved fact ${fact.id} by keywords. Rules-only mode can't verify exact figures, so a reviewer should confirm the wording matches the fact.`;
         } else if (fact) {

@@ -118,3 +118,39 @@ test("segments highlights findings without overlap", () => {
     ["a", "b"],
   );
 });
+
+test("a figure that differs from the approved fact is Unsupported, not Supported", () => {
+  const f = runRules(ctx("Join over 10,000 athletes who trust AquaPulse."));
+  const c = f.find((x) => x.rule_id === "R-4");
+  assert.equal(c?.verdict, "unsupported");
+  assert.equal(c?.source_ref, "F-06");
+  assert.match(c!.reason, /differs from approved fact F-06/);
+});
+
+test("a superlative is not supported by an unrelated taste-test fact", () => {
+  const f = runRules(ctx("AquaPulse tastes best in the world."));
+  const c = f.find((x) => x.rule_id === "R-4");
+  assert.equal(c?.verdict, "unsupported");
+  assert.equal(c?.severity, "high");
+});
+
+test("commas inside numbers do not break claim matching", () => {
+  const f = runRules(ctx("Sold in more than 2,000 stores across 14 Indian states."));
+  const c = f.find((x) => x.rule_id === "R-4");
+  assert.equal(c?.verdict, "supported");
+  assert.equal(c?.source_ref, "F-04");
+});
+
+test("immunity and weight-loss wording is high-risk health wording", () => {
+  const f = runRules(ctx("Boost immunity and lose 5 kg fast."));
+  const q = f.filter((x) => x.rule_id === "R-3").map((x) => x.quote.toLowerCase());
+  assert.ok(q.includes("boost immunity"));
+  assert.ok(q.includes("lose 5 kg"));
+});
+
+test("survey-style claims and rival comparisons are claims that need a fact", () => {
+  const f = runRules(ctx("Doctor recommended by 9 out of 10 dentists."));
+  assert.ok(f.some((x) => x.rule_id === "R-4" && x.quote === "9 out of 10" && x.verdict === "unsupported"));
+  const g = runRules(ctx("7 in 10 consumers preferred our lemon-lime over a leading rival."));
+  assert.ok(g.some((x) => x.quote === "over a leading rival" && x.verdict === "supported" && x.source_ref === "F-08"));
+});
