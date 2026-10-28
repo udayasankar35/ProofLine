@@ -51,12 +51,12 @@ export function parseClaims(raw: string): AiClaim[] {
   return out.slice(0, 25);
 }
 
-async function post(url: string, headers: Record<string, string>, body: unknown): Promise<Response> {
+async function post(url: string, headers: Record<string, string>, body: unknown, timeoutMs = 25_000): Promise<Response> {
   return fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(25_000),
+    signal: AbortSignal.timeout(timeoutMs),
     cache: "no-store",
   });
 }
@@ -72,18 +72,38 @@ async function apiMessage(res: Response): Promise<string> {
   }
 }
 
-async function callGemini(text: string, facts: Fact[], key: string): Promise<string> {
+const BUSY = new Set([429, 500, 502, 503, 504]);
+
+async function callGemini(text: string, facts: Fact[], key: string): Promise<{ reply: string; model: string }> {
   const base = process.env.AI_BASE_URL || "https://generativelanguage.googleapis.com";
-  const models = Array.from(new Set([aiModel(), "gemini-flash-latest"]));
+  // If the chosen model is busy or missing, try the next one. Bounded so a check never waits more than ~40 seconds.
+  const models = Array.from(new Set([aiModel(), "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash"]));
+  const started = Date.now();
   let lastErr = "";
   for (const model of models) {
-    const res = await post(`${base}/v1beta/models/${model}:generateContent`, { "x-goog-api-key": key }, {
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: "user", parts: [{ text: userPrompt(text, facts) }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0 },
-    });
+    if (Date.now() - started > 30_000) break;
+    let res: Response;
+    try {
+      res = await post(
+        `${base}/v1beta/models/${model}:generateContent`,
+        { "x-goog-api-key": key },
+        {
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt(text, facts) }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0 },
+        },
+        15_000,
+      );
+    } catch {
+      lastErr = `${model} did not answer in time`;
+      continue;
+    }
     if (res.status === 404) {
       lastErr = `model ${model} not found`;
+      continue;
+    }
+    if (BUSY.has(res.status)) {
+      lastErr = `${model} is busy (HTTP ${res.status})`;
       continue;
     }
     if (!res.ok) throw new Error(`Gemini returned HTTP ${res.status}${await apiMessage(res)}`);
@@ -92,13 +112,16 @@ async function callGemini(text: string, facts: Fact[], key: string): Promise<str
     };
     const parts = json.candidates?.[0]?.content?.parts ?? [];
     const reply = parts.map((p) => p.text ?? "").join("");
-    if (!reply) throw new Error("Gemini returned an empty reply");
-    return reply;
+    if (!reply) {
+      lastErr = `${model} returned an empty reply`;
+      continue;
+    }
+    return { reply, model };
   }
   throw new Error(lastErr || "Gemini request failed");
 }
 
-async function callOpenAi(text: string, facts: Fact[], key: string): Promise<string> {
+async function callOpenAi(text: string, facts: Fact[], key: string): Promise<{ reply: string; model: string }> {
   const base = process.env.AI_BASE_URL || "https://api.openai.com/v1";
   const res = await post(`${base}/chat/completions`, { authorization: `Bearer ${key}` }, {
     model: aiModel(),
@@ -113,10 +136,10 @@ async function callOpenAi(text: string, facts: Fact[], key: string): Promise<str
   const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const reply = json.choices?.[0]?.message?.content;
   if (!reply) throw new Error("The AI service returned an empty reply");
-  return reply;
+  return { reply, model: aiModel() };
 }
 
-async function callAnthropic(text: string, facts: Fact[], key: string): Promise<string> {
+async function callAnthropic(text: string, facts: Fact[], key: string): Promise<{ reply: string; model: string }> {
   const base = process.env.AI_BASE_URL || "https://api.anthropic.com";
   const res = await post(`${base}/v1/messages`, { "x-api-key": key, "anthropic-version": "2023-06-01" }, {
     model: aiModel(),
@@ -129,19 +152,19 @@ async function callAnthropic(text: string, facts: Fact[], key: string): Promise<
   const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
   const reply = (json.content ?? []).map((b) => (b.type === "text" ? b.text ?? "" : "")).join("");
   if (!reply) throw new Error("Anthropic returned an empty reply");
-  return reply;
+  return { reply, model: aiModel() };
 }
 
 /** Asks the configured model to list claims in the draft. Throws on any failure; the caller falls back to rules-only. */
-export async function extractClaims(text: string, facts: Fact[]): Promise<AiClaim[]> {
+export async function extractClaims(text: string, facts: Fact[]): Promise<{ claims: AiClaim[]; model: string }> {
   const key = process.env.AI_API_KEY;
   if (!key) throw new Error("No AI key configured");
   const provider = aiProvider();
-  const reply =
+  const { reply, model } =
     provider === "openai"
       ? await callOpenAi(text, facts, key)
       : provider === "anthropic"
         ? await callAnthropic(text, facts, key)
         : await callGemini(text, facts, key);
-  return parseClaims(reply);
+  return { claims: parseClaims(reply), model };
 }

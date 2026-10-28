@@ -50,11 +50,11 @@ export async function GET(req: Request) {
         const t0 = Date.now();
         let result: Record<string, unknown>;
         try {
-          const claims = await Promise.race([
+          const r = await Promise.race([
             extractClaims("AquaPulse is the #1 sports drink in India.", FACTS),
             new Promise<never>((_, rej) => setTimeout(() => rej(new Error("No reply from the AI within 40 seconds")), 40_000)),
           ]);
-          result = { ok: true, claimsReturned: claims.length, ms: Date.now() - t0 };
+          result = { ok: true, claimsReturned: r.claims.length, modelUsed: r.model, ms: Date.now() - t0 };
         } catch (e) {
           result = { ok: false, error: short(e), ms: Date.now() - t0 };
         }

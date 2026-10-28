@@ -14,6 +14,7 @@ http.createServer((req, res) => {
     const prompt = body?.contents?.[0]?.parts?.[0]?.text ?? "";
     const draft = prompt.split("<<<DRAFT\n")[1]?.split("\nDRAFT>>>")[0] ?? "";
     if (req.headers["x-goog-api-key"] !== "test") { res.writeHead(403).end("{}"); return; }
+    if (draft.includes("BUSYTEST") && !req.url.includes("gemini-flash-latest")) { res.writeHead(503, {"content-type":"application/json"}).end(JSON.stringify({error:{message:"high demand"}})); return; }
     if (draft.includes("FAILTEST")) { res.writeHead(500).end("{}"); return; }
     const claims = KNOWN.filter(([q]) => draft.includes(q)).map(([quote, kind, fact_id]) => ({ quote, kind, fact_id, relation: "supports" }));
     claims.push({ quote: "100% natural ingredients", kind: "other", fact_id: null, relation: "none" }); // overlaps a rule finding -> dropped
