@@ -3,6 +3,7 @@ import { FACTS } from "@/lib/seed";
 import { db, getStore } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 let lastAiTest = 0;
 
@@ -41,11 +42,15 @@ export async function GET(req: Request) {
       ai.test = { ok: false, error: "Please wait 30 seconds between AI tests." };
     } else {
       lastAiTest = Date.now();
+      const t0 = Date.now();
       try {
-        const claims = await extractClaims("AquaPulse is the #1 sports drink in India.", FACTS);
-        ai.test = { ok: true, claimsReturned: claims.length };
+        const claims = await Promise.race([
+          extractClaims("AquaPulse is the #1 sports drink in India.", FACTS),
+          new Promise<never>((_, rej) => setTimeout(() => rej(new Error("No reply from the AI within 20 seconds")), 20_000)),
+        ]);
+        ai.test = { ok: true, claimsReturned: claims.length, ms: Date.now() - t0 };
       } catch (e) {
-        ai.test = { ok: false, error: short(e) };
+        ai.test = { ok: false, error: short(e), ms: Date.now() - t0 };
       }
     }
   }
