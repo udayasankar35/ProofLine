@@ -9,6 +9,17 @@ export const USERS: User[] = [
   { id: "u-admin", name: "Asha Verma", role: "admin", title: "Brand and compliance owner" },
 ];
 
+/**
+ * PUBLIC demo logins, shown on the sign-in page on purpose so anyone can try every role.
+ * They protect nothing: all data is fictional and each visitor only ever sees their own session's drafts.
+ */
+export const DEMO_PASSWORD = "proofline-demo";
+export const DEMO_LOGINS: Record<string, { email: string; password: string }> = {
+  "u-creator": { email: "devon@aquapulse.demo", password: DEMO_PASSWORD },
+  "u-reviewer": { email: "elena@aquapulse.demo", password: DEMO_PASSWORD },
+  "u-admin": { email: "asha@aquapulse.demo", password: DEMO_PASSWORD },
+};
+
 export const GUIDELINES: Guideline[] = [
   {
     id: "G-1",

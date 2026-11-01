@@ -12,7 +12,7 @@ import { recordLedger, sweepWorkspace, type SweepResult } from "@/lib/ledger";
 import { purgeSession } from "@/lib/purge";
 import { applyFix } from "@/lib/rules";
 import { SAMPLE_FILES } from "@/lib/sample-files";
-import { USERS } from "@/lib/seed";
+import { DEMO_LOGINS, USERS } from "@/lib/seed";
 import { SESSION_COOKIE, USER_COOKIE, homeFor, requireUser } from "@/lib/session";
 import { canSubmit, isEditable } from "@/lib/status";
 import { db, ensureWorkspace, newId, nowIso, resetWorkspace, todayIso } from "@/lib/store";
@@ -47,9 +47,7 @@ function reflagNotice(r: SweepResult): string {
 
 // ---------------------------------------------------------------- sign-in (demo roles)
 
-export async function loginAs(formData: FormData) {
-  const user = USERS.find((u) => u.id === str(formData, "user_id"));
-  if (!user) redirect("/");
+async function startSession(user: User): Promise<never> {
   const jar = await cookies();
   const opts = {
     httpOnly: true,
@@ -64,7 +62,24 @@ export async function loginAs(formData: FormData) {
   jar.set(SESSION_COOKIE, sessionId, opts);
   await ensureWorkspace(sessionId);
   await audit(sessionId, user, "login", `Entered the demo as ${user.name} (${user.role}).`);
-  redirect(homeFor(user.role));
+  return redirect(homeFor(user.role));
+}
+
+/** One-click entry (role cards on the home page and the "Switch to" buttons). */
+export async function loginAs(formData: FormData) {
+  const user = USERS.find((u) => u.id === str(formData, "user_id"));
+  if (!user) redirect("/");
+  await startSession(user);
+}
+
+/** Email and password sign-in with the public demo credentials shown on the home page. */
+export async function signIn(formData: FormData) {
+  const email = str(formData, "email").toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  if (!email || !password) redirect("/?error=" + encodeURIComponent("Enter an email and a password, or use one of the demo accounts shown on this page.") + "#signin");
+  const user = USERS.find((u) => DEMO_LOGINS[u.id]?.email === email && DEMO_LOGINS[u.id]?.password === password);
+  if (!user) redirect("/?error=" + encodeURIComponent("That email and password do not match a demo account. Copy one of the pairs shown above the form.") + "#signin");
+  await startSession(user as User);
 }
 
 export async function logout() {

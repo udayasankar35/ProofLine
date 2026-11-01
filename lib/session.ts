@@ -21,7 +21,7 @@ export async function getSessionId(): Promise<string | null> {
 export async function requireUser(roles?: Role[]): Promise<{ user: User; sessionId: string }> {
   const user = await getCurrentUser();
   const sessionId = await getSessionId();
-  if (!user || !sessionId) redirect("/");
+  if (!user || !sessionId) redirect("/?notice=" + encodeURIComponent("Please sign in with one of the demo accounts to continue."));
   if (roles && !roles.includes(user.role)) redirect("/drafts");
   return { user, sessionId };
 }
