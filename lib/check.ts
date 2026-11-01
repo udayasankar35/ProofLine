@@ -1,7 +1,7 @@
 import { audit } from "./audit";
 import { aiConfigured, aiProvider, extractClaims } from "./ai";
 import { reserveAiCall } from "./aicap";
-import { verifyClaims } from "./claims";
+import { textStage } from "./pipeline";
 import { loadKnowledge } from "./knowledge";
 import { runRules, type RawFinding } from "./rules";
 import { db, newId, nowIso, todayIso } from "./store";
@@ -16,11 +16,6 @@ export interface CheckResult {
 }
 
 const DEFAULT_CONFIDENCE: Record<Origin, Confidence> = { rule: "high", ai: "medium", fallback: "low", vision: "low" };
-
-const rangeOf = (text: string, quote: string): [number, number] | null => {
-  const i = text.toLowerCase().indexOf(quote.toLowerCase());
-  return i < 0 ? null : [i, i + quote.length];
-};
 
 /**
  * Runs the check on a draft and replaces its stored findings.
@@ -53,26 +48,9 @@ export async function runCheck(draft: Draft, actor: Pick<User, "name" | "role">)
     } else {
       try {
         const { claims, model } = await extractClaims(draft.body, facts);
-        const pre = runRules({ ...base, includeClaims: false });
-        const v = verifyClaims({
-          text: draft.body,
-          claims,
-          facts,
-          guidelines,
-          today,
-          takenQuotes: pre.map((f) => f.quote),
-        });
-        // Safety net: rankings and proof claims ("#1", "clinically proven") are high risk and have exact patterns,
-        // so the keyword matcher still covers them if the AI missed one. Anything the AI already covered wins.
-        const aiRanges = v.findings.map((f) => rangeOf(draft.body, f.quote)).filter((r): r is [number, number] => r !== null);
-        const safety = runRules({ ...base, includeClaims: true, claimKinds: ["ranking", "proof"] })
-          .filter((f) => f.rule_id === "R-4" && f.origin === "fallback")
-          .filter((f) => {
-            const r = rangeOf(draft.body, f.quote);
-            return !r || !aiRanges.some(([a, b]) => r[0] < b && r[1] > a);
-          });
-        aiFindings = [...v.findings, ...safety];
-        rejected = v.rejected;
+        const staged = textStage(base, claims);
+        aiFindings = staged.findings;
+        rejected = staged.rejected;
         ai = "used";
         note = `AI-assisted check (${aiProvider()}, ${model}). ${claims.length} claim${claims.length === 1 ? "" : "s"} proposed by the AI${rejected ? `, ${rejected} rejected because the quote was not in the draft` : ""}; every verdict was verified by code. Ranking and proof wording is also covered by fixed patterns.`;
       } catch (e) {
@@ -82,7 +60,7 @@ export async function runCheck(draft: Draft, actor: Pick<User, "name" | "role">)
     }
   }
 
-  const textFindings = hasText ? runRules({ ...base, includeClaims: aiFindings === null }) : [];
+  const textFindings = hasText && aiFindings === null ? textStage(base, null).findings : [];
 
   // Alt text is public copy too: check it against the wording rules (terms, absolutes, medical wording).
   const altFindings: RawFinding[] = [];

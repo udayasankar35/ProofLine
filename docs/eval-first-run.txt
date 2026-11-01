@@ -1,0 +1,137 @@
+# First run of the evaluation set, BEFORE any fixes (rules-only mode)
+# Recorded 2026-11-01T13:04Z. One label (E-0xx 'Heals and') was corrected before this run.
+Cases: 129 (core 82, hard 16, clean controls 31) as of 2026-11-01
+
+class                                        TP   FP   FN   precision  recall    F1
+R-1 Terms and tone                           21    0    2     100.0%    91.3%   95.5%
+R-2 Absolutes and guarantees                 23    0    2     100.0%    92.0%   95.8%
+R-3 Medical or cure wording                  19    4    5      82.6%    79.2%   80.9%
+R-4 Unsupported or outdated claims           26    3   15      89.7%    63.4%   74.3%
+R-4 Claims correctly matched to a fact        9    5    9      64.3%    50.0%   56.3%
+R-5 Required disclaimer                      14    0    0     100.0%   100.0%  100.0%
+
+All problem classes: precision 93.6%, recall 81.1%, F1 86.9%
+Core set: precision 97.2%, recall 93.6% | Hard set: precision n/a, recall 0.0%
+Clean controls with a false alarm: 2 of 31
+R-4 verdict right on 24 of 26; supported claims tied to the right fact 9 of 9
+
+Wrong cases:
+
+E-006 [core] "Energy drinks are not what we make, and we want you to know why."
+   MISSED  R-1 "Energy drinks" 
+
+E-007 [core] "An energy-drink alternative with no added caffeine."
+   MISSED  R-1 "energy-drink" 
+
+E-045 [core] "7 in 10 consumers preferred AquaPulse lemon-lime over a leading rival."
+   EXTRA   R-4:supported "over a leading rival" supported
+
+E-050 [core] "Better than any rival on the market."
+   MISSED  R-4 "Better than" unsupported
+   EXTRA   R-4:supported "Better than" supported
+
+E-051 [core] "Tastier than the leading brand, say fans."
+   EXTRA   R-4 "leading brand" outdated
+
+E-053 [core] "India's best-selling sports drink, again."
+   MISSED  R-4 "best-selling" outdated
+   EXTRA   R-4 "India's best" outdated
+
+E-058 [core] "Cheaper than every rival."
+   MISSED  R-4 "Cheaper than" unsupported
+   EXTRA   R-4:supported "Cheaper than" supported
+
+E-074 [core] "India's best-selling sports drink, sold in more than 3,000 stores."
+   MISSED  R-4 "best-selling" outdated
+   EXTRA   R-4 "India's best" outdated
+
+E-075 [core] "Our 12 athletes say AquaPulse is better than rival brands."
+   MISSED  R-4 "better than" unsupported
+   EXTRA   R-4:supported "better than" supported
+
+E-083 [hard] "AquaPulse keeps colds away all winter."
+   MISSED  R-3 "keeps colds away" 
+
+E-084 [hard] "Say goodbye to tiredness for good."
+   MISSED  R-3 "goodbye to tiredness" 
+   MISSED  R-2 "for good" 
+
+E-085 [hard] "The nation's favourite sports drink."
+   MISSED  R-4 "nation's favourite" unsupported
+
+E-086 [hard] "Nothing beats AquaPulse after a run."
+   MISSED  R-4 "Nothing beats" unsupported
+
+E-087 [hard] "Number 1 choice of athletes."
+   MISSED  R-4 "Number 1" unsupported
+
+E-088 [hard] "Ten out of ten athletes agree."
+   MISSED  R-4 "Ten out of ten" unsupported
+
+E-089 [hard] "Scientifically formulated by experts."
+   MISSED  R-4 "Scientifically formulated" unsupported
+
+E-090 [hard] "You will feel the difference by tomorrow."
+   MISSED  R-2 "by tomorrow" 
+
+E-091 [hard] "Cleanse your system with every sip."
+   MISSED  R-3 "Cleanse your system" 
+
+E-092 [hard] "Supports a stronger immune system."
+   MISSED  R-3 "stronger immune system" 
+
+E-093 [hard] "Now available in 20 states."
+   MISSED  R-4 "20 states" unsupported
+
+E-094 [hard] "Free delivery on orders above Rs 299."
+   MISSED  R-4 "Free delivery on orders above Rs 299" unsupported
+
+E-095 [hard] "AquaPulse launched in 2019."
+   MISSED  R-4 "launched in 2019" unsupported
+
+E-096 [hard] "Fights off infections naturally."
+   MISSED  R-3 "Fights off infections" 
+
+E-097 [hard] "Each bottle has 120 calories."
+   MISSED  R-4 "120 calories" unsupported
+
+E-098 [hard] "AquaPulse is the preferred choice of professional athletes."
+   MISSED  R-4 "preferred choice" unsupported
+
+E-114 [clean] "Each 500 ml bottle has 90 calories and no added caffeine."
+   MISSED  R-4:supported "90 calories" supported
+
+E-117 [clean] "We sponsor 12 national-level athletes in the 2026 season."
+   MISSED  R-4:supported "12 national-level athletes" supported
+
+E-118 [clean] "AquaPulse replaces electrolytes lost through sweat with sodium, potassium and magnesium."
+   MISSED  R-4:supported "replaces electrolytes" supported
+
+E-119 [clean] "AquaPulse is made in FSSAI-licensed facilities."
+   MISSED  R-4:supported "FSSAI-licensed" supported
+
+E-120 [clean] "AquaPulse launched in 2022."
+   MISSED  R-4:supported "launched in 2022" supported
+
+E-121 [clean] "Free delivery on orders above Rs 499 on the AquaPulse website."
+   MISSED  R-4:supported "Free delivery on orders above Rs 499" supported
+
+E-122 [clean] "Recommended serving: one 500 ml bottle during or after exercise."
+   MISSED  R-4:supported "one 500 ml bottle" supported
+
+E-123 [clean] "In a 2025 internal test of 300 consumers, 7 in 10 preferred AquaPulse lemon-lime over a leading rival."
+   EXTRA   R-4:supported "over a leading rival" supported
+
+E-124 [clean] "AquaPulse comes in lemon-lime, orange and berry flavours."
+   MISSED  R-4:supported "lemon-lime, orange and berry" supported
+
+E-125 [clean] "AquaPulse is sweetened with sugar and stevia and has no artificial colours."
+   MISSED  R-4:supported "sugar and stevia" supported
+
+E-126 [clean] "Great for your recovery after a workout. AquaPulse is a sports drink, not a medicine. It is not intended to diagnose, treat, cure or prevent any disease. Individual results vary."
+   EXTRA   R-3 "cure or" rule
+   EXTRA   R-3 "prevent any" rule
+
+E-127 [clean] "Fuel your performance. AquaPulse is a sports drink, not a medicine. It is not intended to diagnose, treat, cure or prevent any disease. Individual results vary."
+   EXTRA   R-3 "cure or" rule
+   EXTRA   R-3 "prevent any" rule
