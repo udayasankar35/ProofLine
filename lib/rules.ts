@@ -32,6 +32,31 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const isExpired = (f: Fact, today: string) => f.expires_on < today;
 
+/** Where the required disclaimer texts appear in a draft (any spacing, any capitals). Wording inside them is never a violation. */
+export function disclaimerRanges(text: string, disclaimers: Disclaimer[]): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const d of disclaimers) {
+    const words = d.text.trim().split(/\s+/).filter(Boolean).map(esc);
+    if (!words.length) continue;
+    for (const m of text.matchAll(new RegExp(words.join("\\s+"), "gi"))) out.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
+  }
+  return out;
+}
+
+/**
+ * A comparison claim ("better than...", "over a leading rival") is only backed by a fact that makes the same comparison.
+ * "7 in 10 preferred AquaPulse over a leading rival" does not back "better than any rival".
+ */
+export function comparisonCovered(claim: string, factStatement: string): boolean {
+  const c = claim.toLowerCase();
+  const f = factStatement.toLowerCase();
+  const than = c.match(/\b(better|faster|stronger|healthier|tastier|cheaper)\s+than\b/);
+  if (than) return f.includes(`${than[1]} than`);
+  if (/\boutperforms?\b/.test(c)) return /\boutperform/.test(f);
+  if (/\bover\b|\bprefer/.test(c)) return /\bover (?:a |the )?(?:leading |other )?(?:rivals?|competitors?|brands?)\b/.test(f);
+  return false;
+}
+
 export function guidelineText(gs: Guideline[], id: string): string {
   const g = gs.find((x) => x.id === id);
   return g ? `${g.title}: ${g.text}` : "";
@@ -133,7 +158,7 @@ const CLAIM_PATTERNS: Array<{ kind: string; label: string; re: RegExp; severity:
   {
     kind: "ranking",
     label: "Ranking",
-    re: /(?:#\s?1(?!\d)|\bno\.?\s?1\b|\bnumber[- ]one\b|\bbest[- ]selling\b|\bworld'?s best\b|\bbest in (?:the )?(?:world|india|class)\b|\bindia'?s (?:best|favou?rite|leading)\b|\bleading brand\b|\btop[- ]rated\b)/gi,
+    re: /(?:#\s?1(?!\d)|\bno\.?\s?1\b|\bnumber[- ]one\b|\bbest[- ]selling\b|\bworld'?s best\b|\bbest in (?:the )?(?:world|india|class)\b|\bindia'?s (?:best[- ]selling|best|favou?rite|leading)\b|(?<!\b(?:than|over|versus|vs\.?|beats?|beating)\s+(?:the\s+|a\s+|other\s+)?)\bleading brand\b|\btop[- ]rated\b)/gi,
     severity: "high",
     guideline: "G-6",
     // only a ranking fact can support a ranking claim
@@ -172,11 +197,15 @@ export function runRules(ctx: RuleContext): RawFinding[] {
   const out: RawFinding[] = [];
   const used = new Ranges();
   const seen = new Set<string>();
-  const text = ctx.text;
+  const original = ctx.text;
+  // Text inside a required disclaimer ("...not intended to cure or prevent any disease") is blanked out so it is never flagged.
+  const blanked = disclaimerRanges(original, ctx.disclaimers);
+  const text = blanked.reduce((t, [a, b]) => t.slice(0, a) + " ".repeat(b - a) + t.slice(b), original);
 
   const push = (f: RawFinding, idx: number | null) => {
     const key = `${f.rule_id}|${f.quote.toLowerCase()}`;
     if (seen.has(key)) return;
+    if (idx !== null && blanked.some(([a, b]) => idx < b && idx + f.quote.length > a)) return;
     seen.add(key);
     if (idx !== null) used.add(idx, idx + f.quote.length);
     out.push(f);
@@ -184,8 +213,12 @@ export function runRules(ctx: RuleContext): RawFinding[] {
 
   // R-1: terminology from the workspace's term list (G-1)
   for (const t of ctx.terms) {
-    const re = new RegExp(`(?<![\\w])${esc(t.term)}(?![\\w])`, "gi");
+    // "energy drink" also finds "Energy drinks" and "energy-drink"
+    const word = t.term.trim();
+    const re = new RegExp(`(?<![\\w])${word.split(/[\s-]+/).filter(Boolean).map(esc).join("[\\s-]+")}${/[a-z]$/i.test(word) ? "s?" : ""}(?![\\w])`, "gi");
     for (const m of text.matchAll(re)) {
+      let suggestion = matchCase(m[0], t.replacement);
+      if (suggestion && /s$/i.test(m[0]) && !/s$/i.test(word) && !/s$/i.test(suggestion)) suggestion += "s";
       push(
         {
           rule_id: "R-1",
@@ -197,7 +230,7 @@ export function runRules(ctx: RuleContext): RawFinding[] {
           source_ref: t.guideline_ref,
           source_text: guidelineText(ctx.guidelines, t.guideline_ref),
           fix_kind: t.replacement ? "replace" : "remove",
-          suggestion: matchCase(m[0], t.replacement),
+          suggestion,
           origin: "rule",
         },
         m.index ?? 0,
@@ -298,11 +331,11 @@ export function runRules(ctx: RuleContext): RawFinding[] {
   // R-5: required disclaimer (G-5)
   for (const d of ctx.disclaimers) {
     const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-    if (norm(text).includes(norm(d.text).slice(0, 40))) continue;
+    if (norm(original).includes(norm(d.text).slice(0, 40))) continue;
     for (const raw of d.triggers.split(",")) {
       const trig = raw.trim();
       if (!trig) continue;
-      const m = text.match(new RegExp(`(?<![\\w])${esc(trig)}(?![\\w])`, "i"));
+      const m = original.match(new RegExp(`(?<![\\w])${esc(trig)}(?![\\w])`, "i"));
       if (!m) continue;
       push(
         {
@@ -352,6 +385,7 @@ export function runRules(ctx: RuleContext): RawFinding[] {
 
   // R-4: claims matched to approved facts by keywords (rules-only fallback)
   if (ctx.includeClaims) {
+    const supportedSeen = new Set<string>(); // the same fact in the same clause is reported once
     for (const p of CLAIM_PATTERNS) {
       if (ctx.claimKinds && !ctx.claimKinds.includes(p.kind)) continue;
       for (const m of text.matchAll(p.re)) {
@@ -360,9 +394,13 @@ export function runRules(ctx: RuleContext): RawFinding[] {
         const pool = p.factFilter ? ctx.facts.filter((f) => p.factFilter!.test(p.kind === "ranking" ? f.keywords : `${f.statement} ${f.keywords}`)) : ctx.facts;
         const fact = matchFact(clauseAt(text, idx), pool);
         const differs = fact ? numbersDiffer(m[0], fact.statement) : false;
+        const wrongForm = Boolean(fact) && p.kind === "comparison" && !comparisonCovered(m[0], fact!.statement);
         let verdict: "supported" | "unsupported" | "outdated";
         let reason: string;
-        if (fact && differs) {
+        if (fact && wrongForm) {
+          verdict = "unsupported";
+          reason = `The closest approved fact (${fact.id}) says: "${fact.statement}" It does not make this comparison. Use the approved wording or remove the claim.`;
+        } else if (fact && differs) {
           verdict = "unsupported";
           reason = `This differs from approved fact ${fact.id}: "${fact.statement}" Use the approved figure or remove the claim.`;
         } else if (fact && !isExpired(fact, ctx.today)) {
@@ -374,6 +412,11 @@ export function runRules(ctx: RuleContext): RawFinding[] {
         } else {
           verdict = "unsupported";
           reason = "No approved fact supports this claim. Remove it, or ask the admin to add a sourced fact.";
+        }
+        if (verdict === "supported" && fact) {
+          const dupKey = `${fact.id}|${clauseAt(text, idx)}`;
+          if (supportedSeen.has(dupKey)) continue;
+          supportedSeen.add(dupKey);
         }
         push(
           {

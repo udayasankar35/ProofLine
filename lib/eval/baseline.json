@@ -1,0 +1,96 @@
+{
+  "asOf": "2026-11-01",
+  "cases": 129,
+  "sets": {
+    "core": 82,
+    "hard": 16,
+    "clean": 31
+  },
+  "classes": {
+    "R-1": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "R-2": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1,
+      "recall": 0.92,
+      "f1": 0.9583333333333334
+    },
+    "R-3": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1,
+      "recall": 0.7916666666666666,
+      "f1": 0.8837209302325582
+    },
+    "R-4": {
+      "tp": 31,
+      "fp": 0,
+      "fn": 10,
+      "precision": 1,
+      "recall": 0.7560975609756098,
+      "f1": 0.8611111111111112
+    },
+    "R-4:supported": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 9,
+      "precision": 1,
+      "recall": 0.5,
+      "f1": 0.6666666666666666
+    },
+    "R-5": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    }
+  },
+  "issues": {
+    "tp": 110,
+    "fp": 0,
+    "fn": 17,
+    "precision": 1,
+    "recall": 0.8661417322834646,
+    "f1": 0.9282700421940928
+  },
+  "bySet": {
+    "core": {
+      "tp": 110,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "hard": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 17,
+      "precision": null,
+      "recall": 0,
+      "f1": null
+    }
+  },
+  "cleanControls": {
+    "total": 31,
+    "withFalseAlarm": 0
+  },
+  "r4": {
+    "verdictOk": 29,
+    "verdictWrong": 2,
+    "factOk": 9,
+    "factWrong": 0
+  },
+  "errors": 0
+}

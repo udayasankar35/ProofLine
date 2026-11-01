@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "test": "node --import tsx --test lib/*.test.ts",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "eval:baseline": "tsx scripts/write-baseline.ts",
+    "prebuild": "npm test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

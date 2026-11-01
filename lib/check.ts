@@ -1,11 +1,11 @@
 import { audit } from "./audit";
 import { aiConfigured, aiProvider, extractClaims } from "./ai";
 import { reserveAiCall } from "./aicap";
-import { textStage } from "./pipeline";
+import { DEFAULT_CONFIDENCE, textStage } from "./pipeline";
 import { loadKnowledge } from "./knowledge";
 import { runRules, type RawFinding } from "./rules";
 import { db, newId, nowIso, todayIso } from "./store";
-import type { Confidence, Draft, Finding, FindingEvent, Origin, User } from "./types";
+import type { Draft, Finding, FindingEvent, User } from "./types";
 import { parseVisual, visualFindings } from "./visual";
 
 export interface CheckResult {
@@ -14,8 +14,6 @@ export interface CheckResult {
   total: number;
   high: number;
 }
-
-const DEFAULT_CONFIDENCE: Record<Origin, Confidence> = { rule: "high", ai: "medium", fallback: "low", vision: "low" };
 
 /**
  * Runs the check on a draft and replaces its stored findings.

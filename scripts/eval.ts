@@ -16,9 +16,10 @@ console.log(`R-4 verdict right on ${m.r4.verdictOk} of ${m.r4.verdictOk + m.r4.v
 if (process.argv.includes("--failures")) {
   console.log("\nWrong cases:");
   for (const r of results) {
-    if (!r.missed.length && !r.extra.length) continue;
+    if (!r.missed.length && !r.extra.length && !r.verdictMismatch.length) continue;
     console.log(`\n${r.id} [${r.set}] ${JSON.stringify(r.text)}`);
     for (const e of r.missed) console.log(`   MISSED  ${e.cls} ${JSON.stringify(e.quote)} ${e.verdict ?? ""}`);
+    for (const v of r.verdictMismatch) console.log(`   VERDICT ${JSON.stringify(v.quote)} expected ${v.expected}, got ${v.got}`);
     for (const p of r.extra) console.log(`   EXTRA   ${p.cls} ${JSON.stringify(p.quote)} ${p.verdict}`);
   }
 }

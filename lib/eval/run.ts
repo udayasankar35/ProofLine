@@ -1,5 +1,5 @@
 import type { AiClaim } from "../ai";
-import { textStage } from "../pipeline";
+import { DEFAULT_CONFIDENCE, textStage } from "../pipeline";
 import type { RawFinding } from "../rules";
 import { DISCLAIMERS, FACTS, GUIDELINES, TERMS } from "../seed";
 import { DATASET, EVAL_TODAY, type EvalCase, type EvalSet, type Expected } from "./dataset";
@@ -22,6 +22,7 @@ export interface Pred {
   verdict: string;
   fact: string;
   origin: string;
+  confidence: string;
 }
 export interface Exp {
   cls: EvalClass;
@@ -35,7 +36,7 @@ export const classOfExpected = (e: Expected): EvalClass => (e.r === "R-4" && e.v
 export function toPred(f: RawFinding): Pred | null {
   if (!["R-1", "R-2", "R-3", "R-4", "R-5"].includes(f.rule_id)) return null;
   const cls: EvalClass = f.rule_id === "R-4" && f.verdict === "supported" ? "R-4:supported" : (f.rule_id as EvalClass);
-  return { cls, quote: f.quote, verdict: f.verdict, fact: f.rule_id === "R-4" ? f.source_ref : "", origin: f.origin };
+  return { cls, quote: f.quote, verdict: f.verdict, fact: f.rule_id === "R-4" ? f.source_ref : "", origin: f.origin, confidence: f.confidence ?? DEFAULT_CONFIDENCE[f.origin] };
 }
 
 const lc = (s: string) => s.toLowerCase();
@@ -52,6 +53,9 @@ export interface CaseResult {
   extra: Pred[];
   verdictOk: number; // R-4 problems detected with the right verdict
   verdictWrong: number;
+  verdictMismatch: Array<{ quote: string; expected: string; got: string }>;
+  /** For every R-4 prediction: its origin and confidence label, and whether it was right. Used to check the labels mean something. */
+  calib: Array<{ origin: string; conf: string; ok: boolean }>;
   factOk: number; // supported claims matched to the right fact
   factWrong: number;
   error?: string;
@@ -63,7 +67,7 @@ export interface CaseResult {
  * already matched expectation are the same finding reported twice and are ignored, not counted as false alarms.
  */
 export function scoreCase(c: EvalCase, preds: Pred[]): CaseResult {
-  const r: CaseResult = { id: c.id, set: c.set, text: c.text, tp: {}, fp: {}, fn: {}, missed: [], extra: [], verdictOk: 0, verdictWrong: 0, factOk: 0, factWrong: 0 };
+  const r: CaseResult = { id: c.id, set: c.set, text: c.text, tp: {}, fp: {}, fn: {}, missed: [], extra: [], verdictOk: 0, verdictWrong: 0, verdictMismatch: [], calib: [], factOk: 0, factWrong: 0 };
   const bump = (m: Partial<Record<EvalClass, number>>, k: EvalClass) => (m[k] = (m[k] ?? 0) + 1);
   const exps: Exp[] = c.expect.map((e) => ({ cls: classOfExpected(e), quote: e.q ?? "", verdict: e.v, fact: e.f }));
   const used = new Set<number>();
@@ -79,10 +83,14 @@ export function scoreCase(c: EvalCase, preds: Pred[]): CaseResult {
     }
     used.add(i);
     matchedExp.add(e);
+    if (preds[i].cls.startsWith("R-4")) r.calib.push({ origin: preds[i].origin, conf: preds[i].confidence, ok: true });
     bump(r.tp, exp.cls);
     if (exp.cls === "R-4") {
       if (preds[i].verdict === exp.verdict) r.verdictOk++;
-      else r.verdictWrong++;
+      else {
+        r.verdictWrong++;
+        r.verdictMismatch.push({ quote: exp.quote, expected: exp.verdict ?? "", got: preds[i].verdict });
+      }
     }
     if (exp.cls === "R-4:supported" && exp.fact) {
       if (preds[i].fact === exp.fact) r.factOk++;
@@ -96,6 +104,7 @@ export function scoreCase(c: EvalCase, preds: Pred[]): CaseResult {
     if (dup) return;
     bump(r.fp, p.cls);
     r.extra.push(p);
+    if (p.cls.startsWith("R-4")) r.calib.push({ origin: p.origin, conf: p.confidence, ok: false });
   });
   return r;
 }
@@ -208,3 +217,47 @@ export function isClaimCase(c: EvalCase): boolean {
 
 export const AI_CASES = (): EvalCase[] => DATASET.filter(isClaimCase);
 export { DATASET, EVAL_TODAY };
+
+export interface CalibRow {
+  origin: string;
+  conf: string;
+  n: number;
+  right: number;
+}
+/** How often findings with each (origin, confidence) label were right. */
+export function calibration(results: CaseResult[]): CalibRow[] {
+  const m = new Map<string, CalibRow>();
+  for (const r of results) {
+    if (r.error) continue;
+    for (const c of r.calib) {
+      const k = `${c.origin}|${c.conf}`;
+      const row = m.get(k) ?? { origin: c.origin, conf: c.conf, n: 0, right: 0 };
+      row.n++;
+      if (c.ok) row.right++;
+      m.set(k, row);
+    }
+  }
+  return [...m.values()].sort((a, b) => (a.origin + a.conf).localeCompare(b.origin + b.conf));
+}
+
+export interface Regression {
+  cls: EvalClass;
+  measure: "precision" | "recall";
+  baseline: number;
+  now: number;
+}
+/** Anything that got worse than the stored baseline. The rules are deterministic, so even a small drop is a real change. */
+export function compareToBaseline(now: EvalMetrics, baseline: EvalMetrics): Regression[] {
+  const out: Regression[] = [];
+  for (const k of CLASSES) {
+    for (const measure of ["precision", "recall"] as const) {
+      const b = baseline.classes[k][measure];
+      const n = now.classes[k][measure];
+      if (b !== null && (n === null || n < b - 1e-9)) out.push({ cls: k, measure, baseline: b, now: n ?? 0 });
+    }
+  }
+  if (now.cleanControls.withFalseAlarm > baseline.cleanControls.withFalseAlarm) {
+    out.push({ cls: "R-1", measure: "precision", baseline: 1 - baseline.cleanControls.withFalseAlarm / Math.max(1, baseline.cleanControls.total), now: 1 - now.cleanControls.withFalseAlarm / Math.max(1, now.cleanControls.total) });
+  }
+  return out;
+}

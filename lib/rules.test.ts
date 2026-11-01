@@ -152,5 +152,9 @@ test("survey-style claims and rival comparisons are claims that need a fact", ()
   const f = runRules(ctx("Doctor recommended by 9 out of 10 dentists."));
   assert.ok(f.some((x) => x.rule_id === "R-4" && x.quote === "9 out of 10" && x.verdict === "unsupported"));
   const g = runRules(ctx("7 in 10 consumers preferred our lemon-lime over a leading rival."));
-  assert.ok(g.some((x) => x.quote === "over a leading rival" && x.verdict === "supported" && x.source_ref === "F-08"));
+  // the figure and the rival comparison come from the same fact in the same clause, so they are reported once
+  const claims = g.filter((x) => x.rule_id === "R-4");
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0].verdict, "supported");
+  assert.equal(claims[0].source_ref, "F-08");
 });
