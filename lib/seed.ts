@@ -40,7 +40,15 @@ export const GUIDELINES: Guideline[] = [
     title: "Rankings and comparisons",
     text: "Rankings, awards and comparisons with other brands need a current, sourced approved fact.",
   },
+  {
+    id: "G-7",
+    title: "Visual identity and accessibility",
+    text: "Visuals use the AquaPulse palette: deep navy #0B2545, aqua #1B9AAA, lime #9BD93C, white and near-black #1F2933. Every image needs descriptive alt text. Text on images needs a contrast ratio of at least 4.5:1 (3:1 for large text) and should not be smaller than about 2% of the image height.",
+  },
 ];
+
+/** The AquaPulse brand palette used by the visual check (G-7). Neutrals (white, black, greys) are always allowed. */
+export const BRAND_PALETTE = ["#0B2545", "#1B9AAA", "#9BD93C", "#FFFFFF", "#1F2933"];
 
 export const FACTS: Fact[] = [
   { id: "F-01", statement: "Each 500 ml bottle has 90 calories and no added caffeine.", source: "Product label, spec v3", owner: "Product team", expires_on: "2027-12-31", keywords: "calories,kcal,caffeine,500 ml" },

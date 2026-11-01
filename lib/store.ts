@@ -11,19 +11,33 @@ export type Table =
   | "revisions"
   | "findings"
   | "comments"
-  | "audit_log";
+  | "audit_log"
+  | "draft_files"
+  | "ledger_entries"
+  | "finding_events"
+  | "eval_runs"
+  | "feedback";
+
+/** Tables whose rows belong to one visitor session's workspace (key is ws + id). */
+export const KNOWLEDGE_TABLES: Table[] = ["guidelines", "facts", "terms", "disclaimers"];
 
 type Row = Record<string, unknown>;
 type Where = Record<string, string | number | boolean>;
 
 export interface Store {
   mode: "memory" | "supabase";
-  select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }): Promise<T[]>;
+  select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }, cols?: string, limit?: number): Promise<T[]>;
   get<T>(table: Table, id: string): Promise<T | null>;
+  /** First row that matches every column in `where` (used for tables keyed by workspace + id). */
+  getWhere<T>(table: Table, where: Where): Promise<T | null>;
   insert(table: Table, rows: Row | Row[]): Promise<void>;
-  insertIgnore(table: Table, rows: Row[]): Promise<void>;
+  /** Insert, skipping rows whose key already exists. `key` names the unique columns (default "id"). */
+  insertIgnore(table: Table, rows: Row[], key?: string): Promise<void>;
   update(table: Table, id: string, patch: Row): Promise<void>;
+  updateWhere(table: Table, where: Where, patch: Row): Promise<void>;
   deleteWhere(table: Table, where: Where): Promise<void>;
+  /** Delete rows whose text column sorts before `value` (ISO timestamps sort correctly). */
+  deleteBefore(table: Table, col: string, value: string): Promise<void>;
   count(table: Table, where?: Where, since?: { col: string; value: string }): Promise<number>;
 }
 
@@ -38,7 +52,7 @@ class MemoryStore implements Store {
   private match(r: Row, where?: Where) {
     return !where || Object.entries(where).every(([k, v]) => r[k] === v);
   }
-  async select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }) {
+  async select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }, cols?: string, limit?: number) {
     let out = this.rows(table).filter((r) => this.match(r, where));
     if (order) {
       const { col, asc = true } = order;
@@ -48,28 +62,53 @@ class MemoryStore implements Store {
         return asc ? x.localeCompare(y) : y.localeCompare(x);
       });
     }
+    if (limit !== undefined) out = out.slice(0, limit);
+    if (cols) {
+      const keep = cols.split(",").map((c) => c.trim());
+      return out.map((r) => Object.fromEntries(keep.map((c) => [c, r[c]]))) as T[];
+    }
     return out.map((r) => ({ ...r })) as T[];
   }
   async get<T>(table: Table, id: string) {
     const r = this.rows(table).find((x) => x.id === id);
     return r ? ({ ...r } as T) : null;
   }
+  async getWhere<T>(table: Table, where: Where) {
+    const r = this.rows(table).find((x) => this.match(x, where));
+    return r ? ({ ...r } as T) : null;
+  }
   async insert(table: Table, rows: Row | Row[]) {
     const list = Array.isArray(rows) ? rows : [rows];
     this.rows(table).push(...list.map((r) => ({ ...r })));
   }
-  async insertIgnore(table: Table, rows: Row[]) {
-    const have = new Set(this.rows(table).map((r) => r.id));
-    for (const r of rows) if (!have.has(r.id)) this.rows(table).push({ ...r });
+  async insertIgnore(table: Table, rows: Row[], key = "id") {
+    const cols = key.split(",").map((c) => c.trim());
+    const k = (r: Row) => cols.map((c) => String(r[c] ?? "")).join("\u0000");
+    const have = new Set(this.rows(table).map(k));
+    for (const r of rows) {
+      if (!have.has(k(r))) {
+        this.rows(table).push({ ...r });
+        have.add(k(r));
+      }
+    }
   }
   async update(table: Table, id: string, patch: Row) {
     const r = this.rows(table).find((x) => x.id === id);
     if (r) Object.assign(r, patch);
   }
+  async updateWhere(table: Table, where: Where, patch: Row) {
+    for (const r of this.rows(table)) if (this.match(r, where)) Object.assign(r, patch);
+  }
   async deleteWhere(table: Table, where: Where) {
     this.data.set(
       table,
       this.rows(table).filter((r) => !this.match(r, where)),
+    );
+  }
+  async deleteBefore(table: Table, col: string, value: string) {
+    this.data.set(
+      table,
+      this.rows(table).filter((r) => !(String(r[col] ?? "") < value)),
     );
   }
   async count(table: Table, where?: Where, since?: { col: string; value: string }) {
@@ -86,16 +125,24 @@ class SupabaseStore implements Store {
   private fail(table: string, op: string, message: string): never {
     throw new Error(`Database ${op} on "${table}" failed: ${message}`);
   }
-  async select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }) {
-    let q = this.sb.from(table).select("*");
+  async select<T>(table: Table, where?: Where, order?: { col: string; asc?: boolean }, cols?: string, limit?: number) {
+    let q = this.sb.from(table).select(cols ?? "*");
     for (const [k, v] of Object.entries(where ?? {})) q = q.eq(k, v);
     if (order) q = q.order(order.col, { ascending: order.asc ?? true });
+    if (limit !== undefined) q = q.limit(limit);
     const { data, error } = await q;
     if (error) this.fail(table, "read", error.message);
-    return (data ?? []) as T[];
+    return (data ?? []) as unknown as T[];
   }
   async get<T>(table: Table, id: string) {
     const { data, error } = await this.sb.from(table).select("*").eq("id", id).maybeSingle();
+    if (error) this.fail(table, "read", error.message);
+    return (data as T) ?? null;
+  }
+  async getWhere<T>(table: Table, where: Where) {
+    let q = this.sb.from(table).select("*");
+    for (const [k, v] of Object.entries(where)) q = q.eq(k, v);
+    const { data, error } = await q.limit(1).maybeSingle();
     if (error) this.fail(table, "read", error.message);
     return (data as T) ?? null;
   }
@@ -103,18 +150,28 @@ class SupabaseStore implements Store {
     const { error } = await this.sb.from(table).insert(rows);
     if (error) this.fail(table, "insert", error.message);
   }
-  async insertIgnore(table: Table, rows: Row[]) {
-    const { error } = await this.sb.from(table).upsert(rows, { onConflict: "id", ignoreDuplicates: true });
+  async insertIgnore(table: Table, rows: Row[], key = "id") {
+    const { error } = await this.sb.from(table).upsert(rows, { onConflict: key, ignoreDuplicates: true });
     if (error) this.fail(table, "insert", error.message);
   }
   async update(table: Table, id: string, patch: Row) {
     const { error } = await this.sb.from(table).update(patch).eq("id", id);
     if (error) this.fail(table, "update", error.message);
   }
+  async updateWhere(table: Table, where: Where, patch: Row) {
+    let q = this.sb.from(table).update(patch);
+    for (const [k, v] of Object.entries(where)) q = q.eq(k, v);
+    const { error } = await q;
+    if (error) this.fail(table, "update", error.message);
+  }
   async deleteWhere(table: Table, where: Where) {
     let q = this.sb.from(table).delete();
     for (const [k, v] of Object.entries(where)) q = q.eq(k, v);
     const { error } = await q;
+    if (error) this.fail(table, "delete", error.message);
+  }
+  async deleteBefore(table: Table, col: string, value: string) {
+    const { error } = await this.sb.from(table).delete().lt(col, value);
     if (error) this.fail(table, "delete", error.message);
   }
   async count(table: Table, where?: Where, since?: { col: string; value: string }) {
@@ -143,20 +200,34 @@ export function getStore(): Store {
   return g.__plStore;
 }
 
-export async function seedKnowledge(store: Store) {
-  await store.insertIgnore("users", USERS as unknown as Row[]);
-  await store.insertIgnore("guidelines", GUIDELINES as unknown as Row[]);
-  await store.insertIgnore("facts", FACTS as unknown as Row[]);
-  await store.insertIgnore("terms", TERMS as unknown as Row[]);
-  await store.insertIgnore("disclaimers", DISCLAIMERS as unknown as Row[]);
+const withWs = <T extends object>(rows: T[], ws: string) => rows.map((r) => ({ ...r, ws })) as unknown as Row[];
+
+/** Creates this session's own copy of the demo guidelines, facts, terms and disclaimers (skips rows that already exist). */
+export async function seedWorkspace(store: Store, ws: string) {
+  await store.insertIgnore("guidelines", withWs(GUIDELINES, ws), "ws,id");
+  await store.insertIgnore("facts", withWs(FACTS, ws), "ws,id");
+  await store.insertIgnore("terms", withWs(TERMS, ws), "ws,id");
+  await store.insertIgnore("disclaimers", withWs(DISCLAIMERS, ws), "ws,id");
 }
 
-/** Returns the store after making sure the demo knowledge base exists. */
+const seededWs = new Set<string>();
+
+/** Makes sure the session's workspace exists. Cheap after the first call in a server instance. */
+export async function ensureWorkspace(ws: string): Promise<Store> {
+  const store = await db();
+  if (!ws || seededWs.has(ws)) return store;
+  if ((await store.count("guidelines", { ws })) === 0) await seedWorkspace(store, ws);
+  seededWs.add(ws);
+  if (seededWs.size > 500) seededWs.clear();
+  return store;
+}
+
+/** Returns the store, with the demo users present. */
 export async function db(): Promise<Store> {
   const store = getStore();
   if (!g.__plSeeded) {
     g.__plSeeded = (async () => {
-      if ((await store.count("guidelines")) === 0) await seedKnowledge(store);
+      await store.insertIgnore("users", USERS as unknown as Row[]);
     })().catch((e) => {
       g.__plSeeded = undefined;
       throw e;
@@ -166,14 +237,12 @@ export async function db(): Promise<Store> {
   return store;
 }
 
-export async function resetKnowledge() {
-  const store = getStore();
-  for (const t of ["guidelines", "facts", "terms", "disclaimers"] as Table[]) {
-    // delete every row: filter on a column that always differs from the sentinel
-    const rows = await store.select<{ id: string }>(t);
-    for (const r of rows) await store.deleteWhere(t, { id: r.id });
-  }
-  await seedKnowledge(store);
+/** Restores this session's guidelines, facts and terms to the original demo set. */
+export async function resetWorkspace(ws: string) {
+  const store = await db();
+  for (const t of KNOWLEDGE_TABLES) await store.deleteWhere(t, { ws });
+  seededWs.delete(ws);
+  await ensureWorkspace(ws);
 }
 
 export const newId = (prefix = "") =>

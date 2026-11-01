@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { sweepWorkspace } from "@/lib/ledger";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/store";
 import { summarize } from "@/lib/status";
@@ -8,6 +9,7 @@ import { Card, StatusBadge, btnPrimary, fmtDate } from "../components/ui";
 export default async function DraftsPage() {
   const { user, sessionId } = await requireUser();
   const store = await db();
+  await sweepWorkspace(sessionId);
   const drafts = await store.select<Draft>("drafts", { session_id: sessionId }, { col: "updated_at", asc: false });
   const sums = await Promise.all(
     drafts.map(async (d) => summarize(await store.select<Finding>("findings", { draft_id: d.id }))),
@@ -52,7 +54,7 @@ export default async function DraftsPage() {
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-navy">{d.title}</p>
                   <p className="text-xs text-slate-500">
-                    {d.channel} · revision {d.rev} · updated {fmtDate(d.updated_at)}
+                    {d.channel} · {d.source_type === "text" ? "text" : d.source_type === "docx" ? "Word file" : d.source_type === "pdf" ? "PDF" : "image"} · revision {d.rev} · updated {fmtDate(d.updated_at)}{d.is_sample ? " · sample history" : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">

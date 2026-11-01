@@ -1,23 +1,30 @@
 import { decideFinding } from "@/app/actions";
 import type { Finding } from "@/lib/types";
 import SubmitButton from "./SubmitButton";
-import { OriginBadge, SeverityBadge, VerdictBadge, btnDanger, btnPrimary, btnSecondary, inputCls } from "./ui";
+import { ConfidenceBadge, OriginBadge, SeverityBadge, VerdictBadge, btnDanger, btnPrimary, btnSecondary, inputCls } from "./ui";
 
 function suggestionText(f: Finding): string {
   if (f.fix_kind === "replace") return `Replace with: “${f.suggestion}”`;
   if (f.fix_kind === "append") return `Add the required text: “${f.suggestion}”`;
   if (f.fix_kind === "remove") return "Remove this wording.";
+  if (f.target === "alt") return "Edit the alt text.";
+  if (f.target === "visual") return f.rule_id === "R-6" ? "Add alt text (see the image card), or dispute with a reason." : "Check it in your design tool and fix the original file, or dispute with a reason.";
   return f.verdict === "supported" ? "No change needed. Confirm the wording matches the fact." : "Needs a manual edit.";
 }
+
+const WHERE: Record<Finding["target"], string> = { body: "", alt: "In the alt text", visual: "About the file or picture" };
 
 export default function FindingCard({
   f,
   draftId,
   canAct,
+  measured,
 }: {
   f: Finding;
   draftId: string;
   canAct: boolean;
+  /** Plain-words precision from the evaluation suite for this kind of finding, e.g. "Measured precision 96% (n=48)." */
+  measured?: string;
 }) {
   const resolved = f.decision === "accepted";
   return (
@@ -26,10 +33,13 @@ export default function FindingCard({
         <SeverityBadge s={f.severity} />
         <VerdictBadge v={f.verdict} />
         <OriginBadge o={f.origin} />
+        <ConfidenceBadge c={f.confidence} measured={measured} />
       </div>
       <h3 className="mt-2 text-sm font-semibold text-navy">{f.title}</h3>
+      {WHERE[f.target] ? <p className="mt-1 text-xs text-slate-500">{WHERE[f.target]}</p> : null}
       <p className="mt-1 break-words rounded bg-slate-50 px-2 py-1 font-mono text-sm text-slate-800">“{f.quote}”</p>
       <p className="mt-2 text-sm text-slate-700">{f.reason}</p>
+      {measured ? <p className="mt-1 text-xs text-slate-500">{measured}</p> : null}
 
       <details className="mt-2 rounded border border-slate-200 bg-slate-50 text-sm">
         <summary className="cursor-pointer px-3 py-2 font-medium text-slate-700">
@@ -81,7 +91,7 @@ export default function FindingCard({
               <SubmitButton className={btnPrimary}>Confirm it matches the fact</SubmitButton>
             </form>
           ) : (
-            <p className="py-2 text-sm text-slate-600">Edit the text yourself, or dispute with a reason.</p>
+            <p className="py-2 text-sm text-slate-600">{f.target === "body" ? "Edit the text yourself, or dispute with a reason." : "Fix it at the source, or dispute with a reason."}</p>
           )}
           <details className="min-w-0 flex-1 basis-60">
             <summary className={`${btnDanger} cursor-pointer list-none`}>Dispute</summary>

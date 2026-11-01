@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
 import { STATUS_LABEL } from "@/lib/status";
 import { db } from "@/lib/store";
-import type { AuditEntry, Draft, Finding } from "@/lib/types";
+import type { AuditEntry, Draft, Finding, LedgerEntry } from "@/lib/types";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -10,8 +10,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const store = await db();
   const draft = await store.get<Draft>("drafts", id);
   if (!draft || draft.session_id !== sessionId) notFound();
-  const [findings, trail] = await Promise.all([
+  const [findings, ledger, trail] = await Promise.all([
     store.select<Finding>("findings", { draft_id: id }),
+    store.select<LedgerEntry>("ledger_entries", { draft_id: id, rev: draft.rev }),
     store.select<AuditEntry>("audit_log", { draft_id: id }, { col: "created_at", asc: true }),
   ]);
   const lines: string[] = [
@@ -20,6 +21,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     `- Channel: ${draft.channel}`,
     `- Status: ${STATUS_LABEL[draft.status]}`,
     `- Revision: ${draft.rev}`,
+    `- Source: ${draft.source_type}${draft.source_name ? ` (${draft.source_name})` : ""}`,
+    ...(draft.alt_text ? [`- Alt text: ${draft.alt_text}`] : []),
+    ...(draft.extract_note ? [`- How the text was read: ${draft.extract_note}`] : []),
     `- Method: ${draft.ai_used ? "AI-assisted claim check, verified by code" : "Rules-only check"}`,
     "",
     "## Draft text",
@@ -32,12 +36,21 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   for (const f of findings) {
     lines.push(
       `### ${f.title}: "${f.quote}"`,
-      `- Verdict: ${f.verdict} · Severity: ${f.severity} · Method: ${f.origin}`,
+      `- Verdict: ${f.verdict} · Severity: ${f.severity} · Method: ${f.origin} · Confidence: ${f.confidence}`,
       `- Why: ${f.reason}`,
       `- Source: ${f.source_ref}`,
       `- Decision: ${f.decision}${f.decision_note ? ` (${f.decision_note})` : ""}${f.decided_by ? ` by ${f.decided_by}` : ""}`,
       "",
     );
+  }
+  if (ledger.length) {
+    lines.push("## Evidence ledger", "");
+    for (const e of ledger) {
+      lines.push(
+        `- "${e.claim}" · ${e.fact_id ? `${e.fact_id}: ${e.fact_statement} (source: ${e.fact_source}; valid until ${e.fact_expires_on})` : e.note} · ${e.basis} · status: ${e.status}${e.status_note ? ` (${e.status_note})` : ""} · approved by ${e.approved_by} on ${e.approved_at}`,
+      );
+    }
+    lines.push("");
   }
   lines.push("## Audit trail", "");
   for (const e of trail) lines.push(`- ${e.created_at} · ${e.actor_name} (${e.actor_role}) · ${e.action}: ${e.detail}`);

@@ -11,7 +11,25 @@ http.createServer((req, res) => {
   req.on("data", (c) => (raw += c));
   req.on("end", () => {
     const body = JSON.parse(raw || "{}");
-    const prompt = body?.contents?.[0]?.parts?.[0]?.text ?? "";
+    const parts = body?.contents?.[0]?.parts ?? [];
+    const media = parts.find((x) => x.inline_data);
+    if (media) {
+      // vision request: answer according to the kind of file
+      if (req.headers["x-goog-api-key"] !== "test") { res.writeHead(403).end("{}"); return; }
+      const mime = media.inline_data.mime_type;
+      const out = mime.startsWith("image/")
+        ? { text: "AquaPulse\ncures fatigue!\nThe #1 sports drink in India\nGuaranteed results in 7 days\nAvailable in 3,000 stores\nTerms apply. See website for details.",
+            suggested_alt: "Navy social tile with the words AquaPulse cures fatigue and a pink band at the bottom",
+            text_blocks: [
+              { text: "Terms apply. See website for details.", height_pct: 1.6, fg: "#F3A6CF", bg: "#FF2D95" },
+              { text: "Available in 3,000 stores", height_pct: 3.7, fg: "#FFFFFF", bg: "#FF2D95" },
+              { text: "AquaPulse", height_pct: 8.9, fg: "#FFFFFF", bg: "#0B2545" } ],
+            colors: ["#0B2545", "#FF2D95", "#9BD93C", "#FFFFFF"] }
+        : { text: "Scanned page: AquaPulse is the #1 sports drink in India.", suggested_alt: "", text_blocks: [], colors: [] };
+      res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
+      return;
+    }
+    const prompt = parts[0]?.text ?? "";
     const draft = prompt.split("<<<DRAFT\n")[1]?.split("\nDRAFT>>>")[0] ?? "";
     if (req.headers["x-goog-api-key"] !== "test") { res.writeHead(403).end("{}"); return; }
     if (draft.includes("BUSYTEST") && !req.url.includes("gemini-flash-latest")) { res.writeHead(503, {"content-type":"application/json"}).end(JSON.stringify({error:{message:"high demand"}})); return; }

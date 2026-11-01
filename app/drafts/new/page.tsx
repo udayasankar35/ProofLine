@@ -2,11 +2,11 @@ import { requireUser } from "@/lib/session";
 import NewDraftForm from "@/app/components/NewDraftForm";
 import { Card, ErrorBanner } from "@/app/components/ui";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
-export default async function NewDraftPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function NewDraftPage({ searchParams }: { searchParams: Promise<{ error?: string; tab?: string }> }) {
   await requireUser(["creator"]);
-  const { error } = await searchParams;
+  const { error, tab } = await searchParams;
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
@@ -17,7 +17,7 @@ export default async function NewDraftPage({ searchParams }: { searchParams: Pro
       </div>
       <ErrorBanner message={error} />
       <Card>
-        <NewDraftForm />
+        <NewDraftForm initialMode={tab === "file" ? "file" : "text"} />
       </Card>
     </div>
   );

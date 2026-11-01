@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { sweepWorkspace } from "@/lib/ledger";
 import { requireUser } from "@/lib/session";
 import { summarize } from "@/lib/status";
 import { db } from "@/lib/store";
@@ -8,8 +9,10 @@ import { Card, StatusBadge, fmtDate } from "../components/ui";
 export default async function ReviewPage() {
   const { user, sessionId } = await requireUser();
   const store = await db();
+  await sweepWorkspace(sessionId);
   const drafts = await store.select<Draft>("drafts", { session_id: sessionId }, { col: "updated_at", asc: false });
   const queue = drafts.filter((d) => d.status === "in_review");
+  const reflagged = drafts.filter((d) => d.status === "reflagged");
   const done = drafts.filter((d) => d.status === "approved" || d.status === "changes_requested");
   const sums = new Map<string, ReturnType<typeof summarize>>();
   for (const d of drafts) sums.set(d.id, summarize(await store.select<Finding>("findings", { draft_id: d.id })));
@@ -61,6 +64,15 @@ export default async function ReviewPage() {
           <ul className="space-y-3">{queue.map(row)}</ul>
         )}
       </section>
+      {reflagged.length > 0 ? (
+        <section aria-labelledby="reflagged">
+          <h2 id="reflagged" className="mb-1 text-base font-semibold text-red-800">
+            Re-review needed ({reflagged.length})
+          </h2>
+          <p className="mb-2 text-sm text-slate-600">These pieces were approved, but the evidence behind a claim has since expired, changed or been removed.</p>
+          <ul className="space-y-3">{reflagged.map(row)}</ul>
+        </section>
+      ) : null}
       {done.length > 0 ? (
         <section aria-labelledby="decided">
           <h2 id="decided" className="mb-2 text-base font-semibold text-navy">

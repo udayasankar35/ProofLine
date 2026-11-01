@@ -18,7 +18,7 @@ export async function audit(
       actor_name: actor.name,
       actor_role: actor.role,
       action,
-      detail: detail.slice(0, 500),
+      detail: detail.slice(0, 1500),
       created_at: nowIso(),
     });
   } catch (e) {

@@ -26,7 +26,7 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Enter as Asha").click()
     page.wait_for_url(re.compile(r"/knowledge$"))
     page.get_by_role("button", name="Restore the original demo guidelines, facts and terms").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     page.get_by_role("button", name="Creator").click()
     page.wait_for_url(re.compile(r"/drafts$"))
     step("entered the demo (admin reset the data, then Devon the creator)")
@@ -62,9 +62,9 @@ with sync_playwright() as p:
     # 4. apply the medical-wording fix and check the rewrite uses fact F-12
     card = page.locator("article", has_text="Medical or cure wording").first
     card.get_by_role("button", name="Apply this fix").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.get_by_text("helps replace electrolytes lost through sweat").first).to_be_visible()
-    expect(page.get_by_text(re.compile(r"Instagram · revision 2"))).to_be_visible()
+    expect(page.get_by_text(re.compile(r"Instagram · Typed text · revision 2"))).to_be_visible()
     step("accepted fix created revision 2 with the approved F-12 wording")
 
     # 5. dispute one finding with a reason
@@ -72,7 +72,7 @@ with sync_playwright() as p:
     card.locator("summary", has_text="Dispute").click()
     card.get_by_label(re.compile("Why is this finding")).fill("Campaign tone approved by the brand team")
     card.get_by_role("button", name="Save dispute").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.get_by_text("Disputed by Devon Rao").first).to_be_visible()
     step("disputed a finding with a reason")
 
@@ -81,14 +81,14 @@ with sync_playwright() as p:
         pending = [a for a in page.locator("article").all() if a.get_by_text("High risk", exact=True).count() and a.get_by_role("button", name="Apply this fix").count()]
         if pending:
             pending[0].get_by_role("button", name="Apply this fix").click()
-            page.wait_for_load_state("networkidle")
+            page.wait_for_timeout(1200)
             continue
         manual = [a for a in page.locator("article").all() if a.get_by_text("High risk", exact=True).count() and a.locator("summary", has_text="Dispute").count()]
         if manual:
             manual[0].locator("summary", has_text="Dispute").click()
             manual[0].get_by_label(re.compile("Why is this finding")).fill("Will be rewritten with the sourced figure before posting")
             manual[0].get_by_role("button", name="Save dispute").click()
-            page.wait_for_load_state("networkidle")
+            page.wait_for_timeout(1200)
             continue
         break
     expect(page.get_by_role("button", name="Send to review")).to_be_enabled()
@@ -97,7 +97,7 @@ with sync_playwright() as p:
 
     # 7. send to review, then reviewer approves
     page.get_by_role("button", name="Send to review").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.get_by_text("Waiting for a reviewer")).to_be_visible()
     step("sent to review")
     page.get_by_role("button", name="Reviewer").click()
@@ -108,12 +108,12 @@ with sync_playwright() as p:
     page.screenshot(path=f"{SHOTS}/04-reviewer.png", full_page=True)
     # changes need a note
     page.get_by_role("button", name="Request changes").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.get_by_text("Tell the author what to change")).to_be_visible()
     page.get_by_label(re.compile("Note to the author")).fill("Looks good. Approving.")
     page.get_by_role("button", name="Approve").click()
-    page.wait_for_load_state("networkidle")
-    expect(page.get_by_text("Approved by a human reviewer")).to_be_visible()
+    page.wait_for_timeout(1200)
+    expect(page.get_by_text("Approved by Elena Shah. This is the only state")).to_be_visible()
     step("reviewer approved (and 'request changes' demanded a note)")
 
     # 8. creator cannot touch an approved draft
@@ -130,7 +130,7 @@ with sync_playwright() as p:
     expect(f07).to_contain_text("Expired")
     f07.locator('input[type="date"]').fill("2027-12-31")
     f07.get_by_role("button", name="Update date").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.locator("li", has_text="ranked #1").first).to_contain_text("In date")
     page.screenshot(path=f"{SHOTS}/05-knowledge.png", full_page=True)
     step("admin renewed fact F-07")
@@ -148,7 +148,7 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Admin").click()
     page.wait_for_url(re.compile(r"/knowledge$"))
     page.get_by_role("button", name="Restore the original demo guidelines, facts and terms").click()
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1200)
     expect(page.locator("li", has_text="ranked #1").first).to_contain_text("Expired")
     step("demo data restored")
 

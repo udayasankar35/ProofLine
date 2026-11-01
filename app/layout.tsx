@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { cookies } from "next/headers";
+import { deleteMyData } from "./actions";
 import Nav from "./components/Nav";
+import { SESSION_COOKIE } from "@/lib/session";
 import { aiConfigured, aiProvider } from "@/lib/ai";
 import { getStore } from "@/lib/store";
 import "./globals.css";
@@ -10,8 +14,9 @@ export const metadata: Metadata = {
     "ProofLine checks marketing copy against approved brand guidelines and facts before publication, explains every issue, suggests fixes, and leaves approval to a human reviewer.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const mode = getStore().mode;
+  const hasSession = Boolean((await cookies()).get(SESSION_COOKIE)?.value);
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
@@ -27,6 +32,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p>
               Demo with fictional brand data (AquaPulse). ProofLine supports review and is not legal advice. A human reviewer always makes the final call.
             </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <Link href="/feedback" className="underline hover:text-slate-800">
+                Give feedback
+              </Link>
+              <Link href="/about" className="underline hover:text-slate-800">
+                How it works and privacy
+              </Link>
+              {hasSession ? (
+                <form action={deleteMyData} className="inline">
+                  <button className="underline hover:text-slate-800">Delete my data</button>
+                </form>
+              ) : null}
+            </div>
             <p>
               Data: {mode === "supabase" ? "stored in a Supabase database" : "in-memory demo store (resets when the server restarts)"} ·{" "}
               {aiConfigured() ? `AI claim check on (${aiProvider()}), with a rules-only fallback` : "Rules-only mode (no AI key set)"}

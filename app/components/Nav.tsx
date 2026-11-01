@@ -16,7 +16,10 @@ export default async function Nav() {
   const links = [
     { href: "/drafts", label: "Drafts" },
     { href: "/review", label: "Review queue" },
+    { href: "/ledger", label: "Evidence ledger" },
+    { href: "/insights", label: "Insights" },
     { href: "/knowledge", label: "Guidelines & facts" },
+    { href: "/evaluation", label: "Evaluation" },
     { href: "/audit", label: "Audit trail" },
     { href: "/about", label: "How it works" },
   ];
@@ -27,7 +30,7 @@ export default async function Nav() {
           Proof<span className="text-teal">Line</span>
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          {(user ? links : [links[4]]).map((l) => (
+          {(user ? links : [links[links.length - 1]]).map((l) => (
             <Link key={l.href} href={l.href} className="rounded px-1 py-1 text-slate-700 hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal">
               {l.label}
             </Link>

@@ -1,4 +1,4 @@
-import { factLine, guidelineText, isExpired, type RawFinding } from "./rules";
+import { factLine, guidelineText, isExpired, numbersDiffer, type RawFinding } from "./rules";
 import type { AiClaim } from "./ai";
 import type { Fact, Guideline, Severity } from "./types";
 
@@ -24,6 +24,7 @@ const KIND_LABEL: Record<string, string> = {
  * - the quote must be a real substring of the draft (otherwise it is discarded)
  * - the cited fact must exist in the approved list (a made-up fact ID is ignored)
  * - an expired fact can never make a claim "supported"
+ * - a claim whose figures are not in the fact can never be "supported", even if the AI says so
  * The AI never decides the verdict on its own.
  */
 export function verifyClaims(args: {
@@ -59,7 +60,11 @@ export function verifyClaims(args: {
     const kind = KIND_LABEL[c.kind] ? c.kind : "other";
     let verdict: "supported" | "unsupported" | "outdated";
     let reason: string;
-    if (fact && c.relation === "supports") {
+    const confidence: "medium" | "low" = fact ? "medium" : "low";
+    if (fact && c.relation === "supports" && numbersDiffer(exact, fact.statement)) {
+      verdict = "unsupported";
+      reason = `The AI matched this to approved fact ${fact.id}, but the figures differ from the fact: "${fact.statement}" Use the approved figure or remove the claim.`;
+    } else if (fact && c.relation === "supports") {
       if (isExpired(fact, today)) {
         verdict = "outdated";
         reason = `Approved fact ${fact.id} covers this, but it expired on ${fact.expires_on}. A claim can't go live on out-of-date evidence. Remove it, or ask the admin for a current, sourced fact.`;
@@ -88,6 +93,7 @@ export function verifyClaims(args: {
       fix_kind: verdict === "supported" ? "manual" : "remove",
       suggestion: "",
       origin: "ai",
+      confidence,
     });
   }
   return { findings, rejected };

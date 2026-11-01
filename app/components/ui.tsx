@@ -1,4 +1,4 @@
-import type { DraftStatus, Finding, Origin, Severity, Verdict } from "@/lib/types";
+import type { Confidence, DraftStatus, Finding, Origin, Severity, Verdict } from "@/lib/types";
 import { STATUS_LABEL } from "@/lib/status";
 
 const pill = "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap";
@@ -21,6 +21,7 @@ const ORIGIN: Record<Origin, string> = {
   rule: "Rule",
   fallback: "Rules-only match",
   ai: "AI-assisted, verified by code",
+  vision: "AI-assisted, needs human check",
 };
 
 const STATUS_CLS: Record<DraftStatus, string> = {
@@ -28,6 +29,7 @@ const STATUS_CLS: Record<DraftStatus, string> = {
   in_review: "border-sky-300 bg-sky-50 text-sky-800",
   changes_requested: "border-orange-300 bg-orange-50 text-orange-800",
   approved: "border-emerald-400 bg-emerald-50 text-emerald-800",
+  reflagged: "border-red-400 bg-red-50 text-red-800",
 };
 
 export const VerdictBadge = ({ v }: { v: Verdict }) => (
@@ -39,6 +41,18 @@ export const SeverityBadge = ({ s }: { s: Severity }) => (
 export const OriginBadge = ({ o }: { o: Origin }) => (
   <span className={`${pill} border-teal/30 bg-tint text-teal`}>{ORIGIN[o]}</span>
 );
+const CONFIDENCE: Record<Confidence, { label: string; cls: string; hint: string }> = {
+  high: { label: "High confidence", cls: "border-emerald-300 bg-emerald-50 text-emerald-800", hint: "A fixed rule matched these exact words." },
+  medium: { label: "Medium confidence", cls: "border-sky-300 bg-sky-50 text-sky-800", hint: "An AI model proposed it and code verified the quote, the fact and the figures." },
+  low: { label: "Needs a human check", cls: "border-amber-400 bg-amber-50 text-amber-900", hint: "A keyword match, an AI estimate or a claim with no matching fact. A person should confirm it." },
+};
+
+export const ConfidenceBadge = ({ c, measured }: { c: Confidence; measured?: string }) => (
+  <span title={`${CONFIDENCE[c].hint}${measured ? ` ${measured}` : ""}`} className={`${pill} ${CONFIDENCE[c].cls}`}>
+    {CONFIDENCE[c].label}
+  </span>
+);
+
 export const StatusBadge = ({ s }: { s: DraftStatus }) => (
   <span className={`${pill} ${STATUS_CLS[s]}`}>{STATUS_LABEL[s]}</span>
 );
@@ -63,6 +77,15 @@ export function Card({ title, children, right }: { title?: string; children: Rea
       ) : null}
       {children}
     </section>
+  );
+}
+
+export function NoticeBanner({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <div role="status" className="mb-4 rounded-md border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+      {message}
+    </div>
   );
 }
 

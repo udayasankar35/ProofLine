@@ -8,11 +8,12 @@ import type {
   Term,
 } from "./types";
 
-/** A finding before it is stored (no id, no draft, no decision yet). */
+/** A finding before it is stored (no id, no draft, no decision yet). Confidence and target get defaults when stored. */
 export type RawFinding = Omit<
   Finding,
-  "id" | "draft_id" | "rev" | "decision" | "decision_note" | "decided_by" | "created_at"
->;
+  "id" | "draft_id" | "rev" | "decision" | "decision_note" | "decided_by" | "created_at" | "confidence" | "target"
+> &
+  Partial<Pick<Finding, "confidence" | "target">>;
 
 export interface RuleContext {
   text: string;
@@ -23,6 +24,8 @@ export interface RuleContext {
   today: string; // YYYY-MM-DD
   /** When false, the keyword-based claim matcher (R-4) is skipped because the AI claim check ran instead. */
   includeClaims: boolean;
+  /** Limits the keyword claim matcher to these kinds (e.g. ranking and proof when it only acts as a safety net beside the AI). */
+  claimKinds?: string[];
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -89,7 +92,7 @@ function clauseAt(text: string, index: number): string {
 }
 
 /** True when the claim contains a number that the fact does not contain (so it cannot be the same figure). */
-function numbersDiffer(claim: string, factStatement: string): boolean {
+export function numbersDiffer(claim: string, factStatement: string): boolean {
   const nums = (t: string) => (t.match(/\d[\d,.]*/g) ?? []).map((n) => n.replace(/[,.]+$/g, "").replace(/,/g, ""));
   const have = new Set(nums(factStatement));
   const want = nums(claim);
@@ -350,6 +353,7 @@ export function runRules(ctx: RuleContext): RawFinding[] {
   // R-4: claims matched to approved facts by keywords (rules-only fallback)
   if (ctx.includeClaims) {
     for (const p of CLAIM_PATTERNS) {
+      if (ctx.claimKinds && !ctx.claimKinds.includes(p.kind)) continue;
       for (const m of text.matchAll(p.re)) {
         const idx = m.index ?? 0;
         if (used.overlaps(idx, idx + m[0].length)) continue;

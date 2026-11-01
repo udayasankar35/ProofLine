@@ -5,7 +5,11 @@ export const STATUS_LABEL: Record<DraftStatus, string> = {
   in_review: "In review",
   changes_requested: "Changes requested",
   approved: "Approved",
+  reflagged: "Re-review needed",
 };
+
+/** A draft can be changed by its author only while it is being worked on (or after its evidence changed). */
+export const isEditable = (s: DraftStatus) => s === "draft" || s === "changes_requested" || s === "reflagged";
 
 /** A finding still needs a human decision (supported claims only need a quick confirmation, so they are not blocking). */
 export const isOpen = (f: Finding) => f.decision === "pending" && f.verdict !== "supported";
