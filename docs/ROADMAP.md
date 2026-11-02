@@ -4,6 +4,8 @@ What ProofLine does today is in the README. This is what comes next, in the orde
 
 ## Next 30 days: make it safe to pilot with one real brand team
 
+**First of all: test with real people.** Five creators and two reviewers use ProofLine on their own copy while we watch where they stop (planned since Round 2, not done in Round 3). The feedback form and the scripted journeys are in place for it. What we learn changes the order of everything below.
+
 1. **Real accounts and teams.** Single sign-on (Google or Microsoft), organisations, invitations, roles per brand. Today's demo logins are public by design. *Why first:* nothing real can be piloted without it.
 2. **Connect the brand's own sources.** Import guidelines and facts from a document or a table, and show which approved fact each claim used. *Why:* the quality of every verdict depends on the facts, and typing them in does not scale.
 3. **A background re-check.** A scheduled job that sweeps approved content every night and sends a message ("3 approved pieces rely on a fact that expires next week"). Today the sweep runs when a fact changes or a page opens.
