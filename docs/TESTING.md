@@ -1,0 +1,37 @@
+# Testing details
+
+Everything below can be re-run from a fresh clone (see the README). Numbers are from the final build.
+
+## Layers
+
+| Layer | What | How to run | Count |
+|---|---|---|---|
+| Unit | rules, fixes, claim verification, AI-reply parsing, visual checks, ledger, extraction, insights, evaluation dataset and regression gate | `npm test` | 70 tests |
+| Evaluation | 129 labelled drafts scored for precision and recall | `npm run eval`, `/evaluation` page | 129 drafts |
+| End to end | a real browser (Playwright) against a running deployment | `python3 tests/<script>.py <url>` | 5 scripts |
+| Gate | unit tests plus "nothing worse than baseline" before every build | automatic (`prebuild`) | |
+
+## End-to-end scripts
+
+- `tests/e2e.py`: the core path. Landing, sign-in, sample draft, findings visible, send-to-review blocked while a high-risk finding is open, apply fix (new revision), dispute with a reason, review (request changes needs a note, approve), approved draft locked for the creator, admin changes a fact and the verdict changes, audit trail, report download, session isolation, mobile layout.
+- `tests/e2e-upload.py`: image, Word and PDF review (sample files and generated files), alt text required and saved twice harmlessly, vision findings labelled as needing a human check, replacing and re-reading a file, corrected-text download, empty / wrong-type / renamed / damaged / oversized files, original files private to the session, no console errors.
+- `tests/e2e-governance.py`: empty ledger, approval writes the ledger, **expiring a fact re-flags the approved piece**, restoring clears it, **removing a fact re-flags**, restoring the demo data clears it, insights empty state / sample history / "only my drafts" / removal, evaluation regression run, feedback form.
+- `tests/e2e-login.py`: credentials visible on the home page, wrong password, unknown email, capitals and spaces in the email, one-click entry, signed-out redirect with an explanation.
+- `tests/e2e-layout.py`: 16 pages at 375, 768 and 1280 px wide as creator and admin; no sideways scroll and nothing outside the screen.
+
+The AI paths run against `tests/mock-ai.mjs`, a small stand-in for the Gemini API (claims, vision answers, busy and failing models) so they are testable without a key. The scripts take `ai` as a second argument to expect AI-assisted labels. The real model is exercised by the live **AI evaluation** (see EVALUATION.md) and by manual checks on the live site.
+
+## What the tests caught while building (examples)
+
+- The first evaluation run found six defects in the Round 2 rules (see EVALUATION.md).
+- Re-running it after a change caught a regression the same hour: a regular-expression slip that made every banned term containing an "s" stop matching (R-1 recall fell from 91% to 70%). It was fixed before commit.
+- End-to-end runs found a React hydration error caused by a form inside a paragraph in the footer, a case where a required disclaimer was flagged by its own words, and a PDF sample where the AI missed "clinically proven" (now covered by a keyword safety net).
+- Test-design lessons: a failing-then-passing run turned out to be the test typing while the previous submit was still finishing, so the tests now wait for each action to finish.
+
+## Manual checks
+
+Sign-in as each role; upload of real Word, PDF and PNG files; phone-width screenshots of the main pages; clone and run with no environment variables (in-memory, rules-only); clone and run with the mock AI.
+
+## Tester feedback
+
+Collected from the in-app form (`/feedback`; anonymous summary at `/api/feedback`). See the final PDF for the numbers and the changes made because of them.
