@@ -569,6 +569,7 @@ export async function addTerm(formData: FormData) {
   const replacement = str(formData, "replacement").slice(0, 60);
   const reason = str(formData, "reason").slice(0, 200) || "Not an approved term.";
   if (!term) back("/knowledge", "Enter the word or phrase to avoid.");
+  if (!/[\p{L}\p{N}]/u.test(term)) back("/knowledge", "The term needs at least one letter or number.");
   const terms = await store.select<Term>("terms", { ws: sessionId });
   if (terms.some((t) => t.term.toLowerCase() === term.toLowerCase())) note("/knowledge", `“${term}” is already on the list.`);
   const next = Math.max(0, ...terms.map((t) => Number(t.id.replace(/\D/g, "")) || 0)) + 1;

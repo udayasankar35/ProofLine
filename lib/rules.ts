@@ -215,7 +215,9 @@ export function runRules(ctx: RuleContext): RawFinding[] {
   for (const t of ctx.terms) {
     // "energy drink" also finds "Energy drinks" and "energy-drink"
     const word = t.term.trim();
-    const re = new RegExp(`(?<![\\w])${word.split(/[\s-]+/).filter(Boolean).map(esc).join("[\\s-]+")}${/[a-z]$/i.test(word) ? "s?" : ""}(?![\\w])`, "gi");
+    const parts = word.split(/[\s-]+/).filter(Boolean).map(esc);
+    if (!/[\p{L}\p{N}]/u.test(word) || parts.length === 0) continue; // a term with no letters or numbers would match everywhere
+    const re = new RegExp(`(?<![\\w])${parts.join("[\\s-]+")}${/[a-z]$/i.test(word) ? "s?" : ""}(?![\\w])`, "gi");
     for (const m of text.matchAll(re)) {
       let suggestion = matchCase(m[0], t.replacement);
       if (suggestion && /s$/i.test(m[0]) && !/s$/i.test(word) && !/s$/i.test(suggestion)) suggestion += "s";
