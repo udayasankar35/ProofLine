@@ -34,4 +34,11 @@ Sign-in as each role; upload of real Word, PDF and PNG files; phone-width screen
 
 ## Tester feedback
 
-Collected from the in-app form (`/feedback`; anonymous summary at `/api/feedback`). See the final PDF for the numbers and the changes made because of them.
+**Not done: testing with real users.** Round 2 listed testing with 5 creators and 2 reviewers as Round 3 work. We did not recruit outside testers in Round 3, so there are no human usability numbers to report and we do not invent any.
+
+What exists instead:
+
+- An anonymous in-app feedback form (`/feedback`; summary at `/api/feedback`), live and tested end to end, so real feedback can be collected the moment anyone uses the product. At the time of submission it held no responses.
+- Five scripted browser journeys that start from a cold session and use only what is on screen (labels and buttons), at phone, tablet and laptop widths. They show the main path can be finished without knowing anything about the app. They are not a substitute for people.
+
+Testing with real creators and reviewers is the first step of the roadmap.
