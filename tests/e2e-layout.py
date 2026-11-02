@@ -43,6 +43,21 @@ with sync_playwright() as p:
             off = page.evaluate(OFFENDERS)
             if sw > cw + 1 or off:
                 bad.append((w, r, sw, cw, off))
+        # phone: the main links sit behind one Menu button, and the header stays small
+        if w < 768:
+            hdr = page.evaluate("document.querySelector('header').getBoundingClientRect().height")
+            assert hdr < 170, f"header is {hdr:.0f}px tall on a {w}px screen"
+            menu = page.get_by_role("button", name="Menu")
+            expect(menu).to_be_visible()
+            expect(page.get_by_role("link", name="Evidence ledger")).to_have_count(0)
+            menu.click()
+            expect(page.get_by_role("link", name="Evidence ledger")).to_be_visible()
+            page.get_by_role("link", name="Evidence ledger").click()
+            expect(page).to_have_url(re.compile(r"/ledger$"))
+            expect(page.get_by_role("link", name="Evidence ledger")).to_have_count(0)  # closed after navigating
+        else:
+            expect(page.get_by_role("button", name="Menu")).to_have_count(0)
+            expect(page.get_by_role("link", name="Evidence ledger")).to_be_visible()
         # admin-only pages
         page.get_by_role("button", name="Admin", exact=True).click() if page.get_by_role("button", name="Admin", exact=True).count() else None
         page.wait_for_timeout(900)

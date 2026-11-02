@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loginAs, logout } from "@/app/actions";
 import { getCurrentUser } from "@/lib/session";
 import { USERS } from "@/lib/seed";
+import MobileMenu from "./MobileMenu";
 import type { User } from "@/lib/types";
 
 const ROLE_LABEL = { creator: "Creator", reviewer: "Reviewer", admin: "Admin" } as const;
@@ -29,7 +30,8 @@ export default async function Nav() {
         <Link href="/" className="text-lg font-bold tracking-tight text-navy">
           Proof<span className="text-teal">Line</span>
         </Link>
-        <nav aria-label="Main" className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        {user ? <MobileMenu links={links} /> : null}
+        <nav aria-label="Main" className={`${user ? "hidden md:flex" : "flex"} flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-sm`}>
           {(user ? links : [links[links.length - 1]]).map((l) => (
             <Link key={l.href} href={l.href} className="rounded px-1 py-1 text-slate-700 hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal">
               {l.label}
