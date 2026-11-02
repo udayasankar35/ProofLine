@@ -54,7 +54,7 @@ The demo logins are shown on the home page on purpose. Pick one (or type the ema
 - **129 labelled drafts** (82 typical violations, 16 hard paraphrases, 31 clean controls) with expected findings written from the guidelines, not from the engine's output.
 - **Evaluation page**: precision and recall per check, the first run before any fix next to the current figures, a one-click **regression run** against a stored baseline, and an **AI evaluation** that scores the AI claim step next to keyword matching on the same drafts. Confidence labels are checked too: are "Medium" findings really right more often than "Low" ones?
 - **Confidence labels on every finding**: High (fixed rule), Medium (AI matched a specific fact, verified by code), Low (no fact, keyword guess, or image estimate). Each finding also shows a measured "how often is this check right" line.
-- **Gates**: `npm test` (70 tests, including dataset integrity and "no check is worse than the baseline") runs automatically before every build, so a regression cannot be deployed.
+- **Gates**: `npm test` (77 tests, including dataset integrity and "no check is worse than the baseline") runs automatically before every build, so a regression cannot be deployed.
 
 Measured results (full detail and honest caveats in [docs/EVALUATION.md](docs/EVALUATION.md)):
 
@@ -117,7 +117,7 @@ Environment variables (see `.env.example`): `SUPABASE_URL`, `SUPABASE_SERVICE_RO
 ## Tests
 
 ```bash
-npm test             # 70 unit tests, includes the evaluation dataset and the regression gate
+npm test             # 77 unit tests, includes the evaluation dataset and the regression gate
 npm run eval         # prints precision and recall per check (add -- --failures to list wrong drafts)
 ```
 
