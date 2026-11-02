@@ -35,9 +35,15 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
 
       {ins.drafts.sample > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-          <span>
-            Includes <strong>{ins.drafts.sample} fictional sample drafts</strong> with invented history so the charts are not empty. “Only my drafts” leaves them out.
-          </span>
+          {mineOnly ? (
+            <span>
+              <strong>{ins.drafts.sample} fictional sample drafts</strong> are hidden in this view. Choose “All drafts” to include them.
+            </span>
+          ) : (
+            <span>
+              Includes <strong>{ins.drafts.sample} fictional sample drafts</strong> with invented history so the charts are not empty. “Only my drafts” leaves them out.
+            </span>
+          )}
           <form action={clearSampleHistory}>
             <SubmitButton className={btnDanger} pending="Removing…">
               Remove sample history
