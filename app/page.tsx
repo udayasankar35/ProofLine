@@ -107,20 +107,23 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
         </h2>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-700">
           <li>
-            Enter as <strong>Devon</strong>, choose <strong>New draft</strong>, load the sample <em>Instagram caption (risky)</em> and press <strong>Check this draft</strong>.
+            Enter as <strong>Devon</strong>, choose <strong>New draft</strong>, load the sample <em>Instagram caption (risky)</em> and press <strong>Check this draft</strong>. Or open the{" "}
+            <strong>Upload</strong> tab and try a sample Word file, PDF or image.
           </li>
           <li>
-            Read the findings. Each one shows the exact words, why they are a problem, and the guideline or approved fact behind it. The “#1” claim is flagged because its
-            evidence expired.
+            Read the findings. Each one shows the exact words, why they are a problem, how sure ProofLine is, and the guideline or approved fact behind it. The “#1” claim is flagged
+            because its evidence expired. For an image, add alt text first.
           </li>
           <li>
             Apply a suggested fix, and dispute another with a reason. Fixes create a new revision and re-check automatically.
           </li>
           <li>
-            When no high-risk finding is left open, send it to review. Switch to <strong>Elena</strong> to approve it or request changes.
+            When no high-risk finding is left open, send it to review. Switch to <strong>Elena</strong> to approve it or request changes. Approval writes the{" "}
+            <strong>evidence ledger</strong>.
           </li>
           <li>
-            Switch to <strong>Asha</strong> and change a fact’s expiry date. Re-check the draft and the verdict changes. Every step is in the audit trail.
+            Switch to <strong>Asha</strong> and change a fact’s expiry date. The approved piece is <strong>re-flagged automatically</strong>. Open <strong>Insights</strong> and{" "}
+            <strong>Evaluation</strong> to see the dashboard and how the checks were measured. Every step is in the audit trail.
           </li>
         </ol>
         <p className="mt-4 text-sm text-slate-600">

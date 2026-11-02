@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { deleteMyData } from "./actions";
+import ConfirmButton from "./components/ConfirmButton";
 import Nav from "./components/Nav";
 import { SESSION_COOKIE } from "@/lib/session";
 import { aiConfigured, aiProvider } from "@/lib/ai";
@@ -41,7 +42,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               {hasSession ? (
                 <form action={deleteMyData} className="inline">
-                  <button className="underline hover:text-slate-800">Delete my data</button>
+                  <ConfirmButton
+                    className="underline hover:text-slate-800"
+                    message="Delete everything you created in this demo (drafts, uploaded files, the ledger and your changes to facts)? This cannot be undone."
+                  >
+                    Delete my data
+                  </ConfirmButton>
                 </form>
               ) : null}
             </div>

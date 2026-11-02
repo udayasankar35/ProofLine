@@ -57,7 +57,10 @@ export async function GET(req: Request) {
     for (const [table, cols] of checks) {
       try {
         if (!s) throw new Error("database not reachable");
-        await s.select(table as never, undefined, undefined, cols, 1);
+        await Promise.race([
+          s.select(table as never, undefined, undefined, cols, 1),
+          new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timed out after 8 seconds")), 8000)),
+        ]);
         result[table] = "ok";
       } catch (e) {
         result[table] = short(e);
