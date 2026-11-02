@@ -25,8 +25,8 @@ What ProofLine does today is in the README. This is what comes next, in the orde
 
 ## What we deliberately did not do in Round 3
 
-- A scheduled background job (needs a paid plan; the on-demand sweep is declared).
+- A scheduled background job. We chose an on-demand sweep (after every fact change and whenever a list or dashboard page opens) and declared the difference.
 - Real authentication (out of scope for a public demo; planned first).
 - OCR in our own code (we use a vision model, which also estimates colours and text size).
 
-Each item above has a reason and a size estimate in the team's backlog; we kept this list short on purpose.
+The list is short on purpose: a few things done well beat a long wish list.
