@@ -63,7 +63,7 @@ Measured results (full detail and honest caveats in [docs/EVALUATION.md](docs/EV
 | Fixed rules and keyword matching, precision | 93.6% | 100% |
 | Fixed rules and keyword matching, recall | 81.1% | 86.6% (typical violations 100%, hard paraphrases 0% by design) |
 | Good drafts flagged wrongly (31 clean controls) | 2 | 0 |
-| AI claim step vs keyword matching | | _see docs/EVALUATION.md_ |
+| AI claim step vs keyword matching (65 claim drafts, one live run) | | Problem-claim recall 76% keyword vs 88% AI (90% with the extended keyword safety net); true claims tied to the right fact 50% vs 100%; precision 100% and 0 false alarms in both. One run, one model; see docs/EVALUATION.md |
 
 The first run found six real defects (for example, the required disclaimer was flagged as a violation, and "better than any rival" was marked *supported*). They are fixed and each has a test.
 

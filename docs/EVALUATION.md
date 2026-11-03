@@ -47,7 +47,27 @@ The evaluation also **caught a regression of our own** while we were fixing item
 
 ## 4. The AI claim check
 
-<!--AI-RESULTS-->
+One live run on 3 Nov 2026 (05:41 IST) through the deployed app, with Google Gemini (`gemini-3.5-flash-lite`). It sent the **65 drafts that contain a claim, a ranking or a comparison** (42 typical, 10 hard, 13 clean controls) and scored the answers against the same labels as the keyword matcher. 0 requests failed. The AI's raw answers are saved, so every number below can be re-scored without new AI requests. The same figures are at `/evaluation` and `/api/eval`.
+
+**First AI run, recorded before any change** (cells are precision / recall)
+
+| Measure | Keyword matching alone | With the AI step |
+|---|---|---|
+| Claims that are a problem (unsupported or outdated) | 100% / 76% | 100% / 88% (36 found, 5 missed) |
+| True claims tied to the right approved fact | 100% / 50% | 100% / 100% (18 of 18) |
+| Right verdict on the problem claims found | 29 of 31 | 34 of 36 |
+| Good drafts flagged wrongly (13 clean controls) | 0 | 0 |
+
+So the AI step finds more problem claims than keywords and matches every true claim to the right fact, which keywords do for only half. It did not add false alarms.
+
+**Where the AI step was wrong (7 drafts):** it missed "9 out of 10" (E-055), "Up to 25%" (E-057), "better than" (E-075), "Nothing beats" (E-086) and "Scientifically formulated" (E-089); and it called "#1" (E-069) and "best-selling" (E-074) *unsupported* when the right verdict was *outdated* (an expired fact exists). The list is under "Show the drafts where the AI step was wrong" on the Evaluation page.
+
+**One change made because of this run.** Three of the misses were figures or comparisons that the keyword matcher recognises, so in AI mode the keyword safety net, which already covered rankings and proof wording, now also covers figures and comparisons the AI did not cover (anything the AI covered still wins). Re-scored from the same saved answers, with no new AI requests: recall on problem claims went from 88% (36 of 41) to **90% (37 of 41)**, precision stayed 100%, verdicts 35 of 37, clean controls 0 of 13. Only one of the five misses was fixed by it (the others overlap a claim the AI did cover, or have no pattern). We stopped there on purpose: tuning further on the same drafts would only measure how well we fitted them. This change was chosen after seeing these failures, so the 90% is optimistic, and the 10 hard drafts are no longer a clean held-out check for it.
+
+**Do the confidence labels mean something?** In this run, Medium findings were right 35 of 35 times and Low findings 13 of 13 times. Both are 100%, so the run **does not show that Medium is better than Low**; the sample is too small to separate them. We report the labels as an honest guide to where a reviewer should look hardest, not as a measured probability.
+
+**Caveats.** One run, one day, one model (a backup model was used for this run); the free AI quota limits runs to 2 a day, so we did not repeat it. Results shift a little from run to run. These drafts were written by the same person who wrote the rules.
+
 
 ## 5. Confidence labels
 
