@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { reserveAiCall } from "@/lib/aicap";
 import { audit } from "@/lib/audit";
+import { MAX_CSV_BYTES, parseFactsCsv } from "@/lib/csv";
 import { runCheck } from "@/lib/check";
 import { ingestFile, MAX_DOC_TEXT, MAX_FILE_BYTES, sniff, type Ingested } from "@/lib/extract";
 import { loadKnowledge } from "@/lib/knowledge";
@@ -515,6 +516,28 @@ export async function addFact(formData: FormData) {
   await store.insert("facts", { ws: sessionId, id, statement, source, owner, expires_on: expires, keywords });
   await audit(sessionId, user, "fact_added", `${id}: ${statement} (until ${expires})`);
   return afterFactChange(sessionId, `Added ${id}.`);
+}
+
+/** Adds many approved facts from a CSV file (admin only). Bad rows are skipped with a reason; nothing is half-saved. */
+export async function importFacts(formData: FormData) {
+  const { user, sessionId } = await requireUser(["admin"]);
+  await ensureWorkspace(sessionId);
+  const f = formData.get("file");
+  if (!(f instanceof File) || f.size === 0) back("/knowledge", "Choose a CSV file first.");
+  const file = f as File;
+  if (file.size > MAX_CSV_BYTES) back("/knowledge", `That file is ${Math.round(file.size / 1024)} KB. The limit is ${MAX_CSV_BYTES / 1024} KB.`);
+  const store = await db();
+  const facts = await store.select<Fact>("facts", { ws: sessionId });
+  const parsed = parseFactsCsv(await file.text(), facts);
+  if (!parsed.ok) back("/knowledge", parsed.error);
+  const { rows, problems } = parsed as Extract<typeof parsed, { ok: true }>;
+  const why = problems.slice(0, 3).map((p) => p.slice(0, 110)).join(" ") + (problems.length > 3 ? ` (${problems.length - 3} more)` : "");
+  if (rows.length === 0) back("/knowledge", `Nothing was imported. ${why}`.trim());
+  let next = Math.max(0, ...facts.map((x) => Number(x.id.replace(/\D/g, "")) || 0)) + 1;
+  const created = rows.map((r) => ({ ws: sessionId, id: `F-${String(next++).padStart(2, "0")}`, ...r }));
+  await store.insert("facts", created);
+  await audit(sessionId, user, "facts_imported", `${created.length} facts from CSV (${created[0].id} to ${created[created.length - 1].id})${problems.length ? `, ${problems.length} rows skipped` : ""}`);
+  return afterFactChange(sessionId, `Imported ${created.length} fact${created.length === 1 ? "" : "s"} (${created[0].id} to ${created[created.length - 1].id}).${problems.length ? ` Skipped ${problems.length}: ${why}` : ""}`);
 }
 
 export async function setFactExpiry(formData: FormData) {

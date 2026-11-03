@@ -97,7 +97,7 @@ export interface SweepResult {
 /**
  * Compares every approved piece's ledger with today's approved facts.
  * A piece whose fact expired, changed or was removed becomes "reflagged"; if the cause goes away it returns to "approved".
- * Runs after every fact change and whenever a list or dashboard page loads (there is no background job).
+ * Runs after every fact change, whenever a list or dashboard page loads, and once a day from the scheduled job.
  */
 export async function sweepWorkspace(sessionId: string): Promise<SweepResult> {
   const result: SweepResult = { reflagged: [], cleared: [] };
@@ -134,4 +134,28 @@ export async function sweepWorkspace(sessionId: string): Promise<SweepResult> {
     }
   }
   return result;
+}
+
+/**
+ * The daily background check: re-evaluates every workspace that has approved or re-flagged pieces.
+ * Called by the scheduled job (see vercel.json); the on-demand sweeps still run after a fact change and on page loads.
+ */
+export async function sweepAllWorkspaces(limit = 300): Promise<{ workspaces: number; reflagged: number; cleared: number; failed: number }> {
+  const store = await db();
+  const rows = [
+    ...(await store.select<Pick<Draft, "session_id">>("drafts", { status: "approved" }, undefined, "session_id", 2000)),
+    ...(await store.select<Pick<Draft, "session_id">>("drafts", { status: "reflagged" }, undefined, "session_id", 2000)),
+  ];
+  const ids = Array.from(new Set(rows.map((r) => r.session_id))).slice(0, limit);
+  const total = { workspaces: ids.length, reflagged: 0, cleared: 0, failed: 0 };
+  for (const id of ids) {
+    try {
+      const r = await sweepWorkspace(id);
+      total.reflagged += r.reflagged.length;
+      total.cleared += r.cleared.length;
+    } catch {
+      total.failed++;
+    }
+  }
+  return total;
 }

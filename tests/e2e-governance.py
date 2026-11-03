@@ -1,7 +1,7 @@
 """Governance path: evidence ledger, automatic re-flag when evidence expires or is removed, insights, feedback, evaluation.
 Usage: python3 tests/e2e-governance.py http://localhost:3111
 Feedback is only submitted when the target is localhost, so tester statistics on the live site stay clean."""
-import re, sys
+import os, re, sys
 from playwright.sync_api import sync_playwright, expect
 
 BASE = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "http://localhost:3111"
@@ -106,6 +106,40 @@ with sync_playwright() as p:
     page.goto(BASE + "/review")
     expect(page.get_by_text("Re-review needed")).to_have_count(0)
     step("removing a fact re-flags; restoring the demo data clears it")
+
+    # 7b. CSV import of facts (admin only): good file, repeat, mixed file, wrong file, and who can see it
+    FX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    def import_csv(name):
+        page.goto(BASE + "/knowledge")
+        page.locator("summary", has_text="Import many facts from a CSV file").click()
+        page.set_input_files("#facts_file", os.path.join(FX, name))
+        page.get_by_role("button", name="Import facts").click()
+        page.wait_for_url(url(r"/knowledge\?(notice|error)="))
+    import_csv("facts-sample.csv")
+    expect(page.locator("main [role=status]").first).to_contain_text("Imported 3 facts")
+    expect(page.locator("main").get_by_text("supermarkets and pharmacies").first).to_be_visible()
+    expect(page.get_by_role("heading", name="Approved facts (17)")).to_be_visible()
+    step("CSV import adds 3 facts and lists them")
+    import_csv("facts-sample.csv")
+    expect(page.locator("main").get_by_text("Nothing was imported").first).to_be_visible()
+    expect(page.locator("main").get_by_text("already in the approved facts").first).to_be_visible()
+    expect(page.get_by_role("heading", name="Approved facts (17)")).to_be_visible()
+    step("importing the same file again adds nothing and says why")
+    import_csv("facts-mixed.csv")
+    expect(page.locator("main [role=status]").first).to_contain_text("Imported 1 fact")
+    expect(page.locator("main [role=status]").first).to_contain_text("Skipped 2")
+    expect(page.locator("main [role=status]").first).to_contain_text("Row 3")
+    step("a mixed file imports the good row and explains each skipped row")
+    import_csv("facts-badheader.csv")
+    expect(page.locator("main").get_by_text("Missing: statement, source, expires_on").first).to_be_visible()
+    step("a file with the wrong columns is refused with a clear message")
+    page.get_by_role("button", name="Restore the original demo guidelines, facts and terms").click()
+    page.wait_for_timeout(1200)
+    switch(page, "Reviewer")
+    page.goto(BASE + "/knowledge")
+    expect(page.get_by_text("Import many facts from a CSV file")).to_have_count(0)
+    switch(page, "Admin")
+    step("only the admin sees the import form; demo data restored")
 
     # 8. insights: empty state, sample history, toggle, remove
     page.goto(BASE + "/insights?scope=mine")

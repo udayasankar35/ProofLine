@@ -75,7 +75,7 @@ export default function AboutPage() {
             If a fact later expires, is changed or is removed, every approved piece that relied on it is <strong>re-flagged for re-review</strong> automatically. If the evidence is valid again, the flag clears.
           </li>
           <li>Anything the reviewer approved despite an open finding is recorded as a “reviewer exception”, so it can be found later.</li>
-          <li>There is no background job in this demo. The ledger is re-checked whenever a fact changes and whenever a list or dashboard page opens.</li>
+          <li>The ledger is re-checked whenever a fact changes, whenever a list or dashboard page opens, and once a day (about 02:00 IST) by a scheduled job. On the free hosting plan that is the most often a job may run, and it sends no notifications yet.</li>
           <li>
             The <Link href="/insights" className="text-teal underline">Insights</Link> page shows which rules fire most, which findings are disputed most, how long approval takes, and which facts are about to expire.
           </li>

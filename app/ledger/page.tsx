@@ -48,7 +48,7 @@ export default async function LedgerPage() {
           For every approved piece: each claim, the approved fact that backs it (as it was at approval), and who approved it. If a fact expires, changes or is removed, every piece that relies on it is re-flagged.
         </p>
         <p className="mt-1 text-xs text-slate-600">
-          Checked automatically whenever a fact changes and whenever a list or dashboard page opens{lastChecked ? `. Last check: ${fmtDate(lastChecked)}` : ""}. There is no background job in this demo.
+          Checked automatically whenever a fact changes, whenever a list or dashboard page opens, and once a day by a scheduled job{lastChecked ? `. Last check: ${fmtDate(lastChecked)}` : ""}.
         </p>
       </div>
 

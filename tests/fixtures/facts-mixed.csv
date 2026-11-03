@@ -1,0 +1,4 @@
+statement,source,expires_on
+Good fact,Some source,2027-01-31
+"Bad date fact",Some source,31/01/2027
+,Missing statement,2027-01-31

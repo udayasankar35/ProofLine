@@ -1,4 +1,4 @@
-import { addFact, addTerm, deleteFact, editFact, resetKnowledge, setFactExpiry } from "../actions";
+import { addFact, addTerm, deleteFact, editFact, importFacts, resetKnowledge, setFactExpiry } from "../actions";
 import SubmitButton from "../components/SubmitButton";
 import { Card, ErrorBanner, NoticeBanner, btnDanger, btnPrimary, btnSecondary, inputCls } from "../components/ui";
 import { loadKnowledge } from "@/lib/knowledge";
@@ -164,6 +164,31 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
               </div>
               <div className="sm:col-span-2">
                 <SubmitButton className={btnPrimary}>Add fact</SubmitButton>
+              </div>
+            </form>
+          </details>
+        ) : null}
+        {isAdmin ? (
+          <details className="mt-3 rounded border border-slate-200">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">Import many facts from a CSV file</summary>
+            <form action={importFacts} className="grid gap-3 border-t border-slate-200 p-3">
+              <p className="text-sm text-slate-700">
+                The first row names the columns: <code>statement</code>, <code>source</code> and <code>expires_on</code> (written YYYY-MM-DD) are required; <code>owner</code> and <code>keywords</code> are optional. Up to 200 rows and 100 KB. Facts already listed are skipped, and every skipped row is explained.{" "}
+                <a href="/samples/facts-sample.csv" download className="text-teal underline">
+                  Download a sample CSV
+                </a>
+                .
+              </p>
+              <div>
+                <label htmlFor="facts_file" className="mb-1 block text-xs font-medium text-slate-700">
+                  CSV file
+                </label>
+                <input id="facts_file" name="file" type="file" accept=".csv,text/csv" required className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-50" />
+              </div>
+              <div>
+                <SubmitButton className={btnPrimary} pending="Importing…">
+                  Import facts
+                </SubmitButton>
               </div>
             </form>
           </details>
