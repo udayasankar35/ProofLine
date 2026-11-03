@@ -8,7 +8,7 @@ Built solo for CodeStar 30 (We Code Coders, sponsor Inkloom AI). Round 2 built t
 
 - **Live demo:** https://proof-line-sigma.vercel.app
 - **Repository:** https://github.com/udayasankar35/ProofLine
-- **Documents:** [Architecture](docs/ARCHITECTURE.md) · [Evaluation](docs/EVALUATION.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md)
+- **Documents:** [Architecture](docs/ARCHITECTURE.md) · [Evaluation](docs/EVALUATION.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md) · [Product document (PDF)](docs/ProofLine-Round3-Product-Document.pdf)
 
 ## Try it in two minutes (no sign-up)
 
