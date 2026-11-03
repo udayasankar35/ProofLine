@@ -1,3 +1,6 @@
+// These tests must never touch a real database, even where the build has Supabase variables set (as on Vercel).
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cronAllowed, sweepDue } from "./cron";
@@ -23,8 +26,8 @@ test("the daily sweep re-flags approved pieces in every workspace and clears the
   const F04 = FACTS.find((f) => f.id === "F-04")!;
   for (const ws of ["cron-a", "cron-b"]) {
     await ensureWorkspace(ws);
-    await store.insert("drafts", { id: `D-${ws}`, session_id: ws, title: "Piece", status: "approved", rev: 1, updated_at: "2026-11-01T00:00:00Z" });
-    await store.insert("ledger_entries", { id: `L-${ws}`, session_id: ws, draft_id: `D-${ws}`, rev: 1, fact_id: F04.id, fact_statement: F04.statement, fact_source: F04.source, status: "ok", status_note: "", checked_at: "2026-11-01T00:00:00Z" });
+    await store.insert("drafts", { id: `D-${ws}`, session_id: ws, title: "Piece", channel: "Instagram", author_id: "u-creator", body: "text", status: "approved", rev: 1, created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-01T00:00:00Z" });
+    await store.insert("ledger_entries", { id: `L-${ws}`, session_id: ws, draft_id: `D-${ws}`, rev: 1, claim: "more than 2,000 stores", approved_by: "Elena Shah", approved_at: "2026-11-01T00:00:00Z", fact_id: F04.id, fact_statement: F04.statement, fact_source: F04.source, status: "ok", status_note: "", checked_at: "2026-11-01T00:00:00Z" });
   }
   // nothing wrong yet
   const first = await sweepAllWorkspaces();

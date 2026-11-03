@@ -1,3 +1,6 @@
+// These tests must never touch a real database, even where the build has Supabase variables set (as on Vercel).
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { loadSampleHistory, removeSampleHistory } from "./history";
