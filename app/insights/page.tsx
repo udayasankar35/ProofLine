@@ -107,7 +107,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">Counted from every check run, including first drafts, so it shows what people write wrongly the first time.</p>
+              <p className="mt-3 text-xs text-slate-600">Counted from every check run, including first drafts, so it shows what people write wrongly the first time.</p>
             </Card>
 
             <Card title="Most-disputed findings">
@@ -131,7 +131,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">A high dispute rate is a hint, not proof: it can also mean the rule is right and people need training.</p>
+              <p className="mt-3 text-xs text-slate-600">A high dispute rate is a hint, not proof: it can also mean the rule is right and people need training.</p>
             </Card>
 
             <Card title="Time to approval">
@@ -168,14 +168,14 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
                         <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${f.state === "expired" ? "border-red-300 bg-red-50 text-red-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}>
                           {f.state === "expired" ? `Expired ${Math.abs(f.days)} day${Math.abs(f.days) === 1 ? "" : "s"} ago` : f.days === 0 ? "Expires today" : `Expires in ${f.days} day${f.days === 1 ? "" : "s"}`}
                         </span>
-                        <span className="text-xs text-slate-500">{f.usedBy} approved piece{f.usedBy === 1 ? "" : "s"} rely on it</span>
+                        <span className="text-xs text-slate-600">{f.usedBy} approved piece{f.usedBy === 1 ? "" : "s"} rely on it</span>
                       </div>
                       <p className="mt-1 text-slate-800">{f.statement}</p>
                     </li>
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-slate-600">
                 <Link href="/knowledge" className="text-teal underline">
                   Renew or edit facts
                 </Link>{" "}

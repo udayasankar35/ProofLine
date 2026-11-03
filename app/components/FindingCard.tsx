@@ -36,10 +36,10 @@ export default function FindingCard({
         <ConfidenceBadge c={f.confidence} measured={measured} />
       </div>
       <h3 className="mt-2 text-sm font-semibold text-navy">{f.title}</h3>
-      {WHERE[f.target] ? <p className="mt-1 text-xs text-slate-500">{WHERE[f.target]}</p> : null}
+      {WHERE[f.target] ? <p className="mt-1 text-xs text-slate-600">{WHERE[f.target]}</p> : null}
       <p className="mt-1 break-words rounded bg-slate-50 px-2 py-1 font-mono text-sm text-slate-800">“{f.quote}”</p>
       <p className="mt-2 text-sm text-slate-700">{f.reason}</p>
-      {measured ? <p className="mt-1 text-xs text-slate-500">{measured}</p> : null}
+      {measured ? <p className="mt-1 text-xs text-slate-600">{measured}</p> : null}
 
       <details className="mt-2 rounded border border-slate-200 bg-slate-50 text-sm">
         <summary className="cursor-pointer px-3 py-2 font-medium text-slate-700">

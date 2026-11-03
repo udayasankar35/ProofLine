@@ -53,7 +53,7 @@ export default async function DraftsPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-navy">{d.title}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600">
                     {d.channel} · {d.source_type === "text" ? "text" : d.source_type === "docx" ? "Word file" : d.source_type === "pdf" ? "PDF" : "image"} · revision {d.rev} · updated {fmtDate(d.updated_at)}{d.is_sample ? " · sample history" : ""}
                   </p>
                 </div>

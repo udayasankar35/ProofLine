@@ -78,7 +78,7 @@ export default function NewDraftForm({ initialMode = "text" }: { initialMode?: "
     <div className="grid gap-4 sm:grid-cols-3">
       <div className="sm:col-span-2">
         <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700">
-          Title <span className="font-normal text-slate-500">(optional)</span>
+          Title <span className="font-normal text-slate-600">(optional)</span>
         </label>
         <input id="title" name="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={inputCls} />
       </div>
@@ -129,7 +129,7 @@ export default function NewDraftForm({ initialMode = "text" }: { initialMode?: "
               Text to check
             </label>
             <textarea id="body" name="body" required minLength={10} maxLength={4000} rows={9} value={body} onChange={(e) => setBody(e.target.value)} className={inputCls} />
-            <p className="mt-1 text-xs text-slate-500">{body.length} / 4000 characters. Paste your own copy, or load a sample above.</p>
+            <p className="mt-1 text-xs text-slate-600">{body.length} / 4000 characters. Paste your own copy, or load a sample above.</p>
           </div>
           <SubmitButton className={btnPrimary} pending="Checking against the guidelines…">
             Check this draft
@@ -152,7 +152,7 @@ export default function NewDraftForm({ initialMode = "text" }: { initialMode?: "
                 onChange={onPick}
                 className={`${inputCls} file:mr-3 file:rounded file:border-0 file:bg-tint file:px-3 file:py-1 file:text-sm file:font-medium file:text-teal`}
               />
-              <p className="mt-1 text-xs text-slate-500">Word (.docx), PDF, or an image (PNG, JPEG, WebP), up to 4 MB. Large photos are shrunk in your browser first.</p>
+              <p className="mt-1 text-xs text-slate-600">Word (.docx), PDF, or an image (PNG, JPEG, WebP), up to 4 MB. Large photos are shrunk in your browser first.</p>
               {fileInfo ? (
                 <p className="mt-1 text-xs text-slate-700">
                   Selected: <strong>{fileInfo.name}</strong> ({(fileInfo.size / 1024).toFixed(0)} KB)
@@ -168,10 +168,10 @@ export default function NewDraftForm({ initialMode = "text" }: { initialMode?: "
             {fileInfo?.image ? (
               <div>
                 <label htmlFor="alt" className="mb-1 block text-sm font-medium text-slate-700">
-                  Alt text for this image <span className="font-normal text-slate-500">(required before review)</span>
+                  Alt text for this image <span className="font-normal text-slate-600">(required before review)</span>
                 </label>
                 <input id="alt" name="alt" maxLength={300} placeholder="One plain sentence that says what the image shows" className={inputCls} />
-                <p className="mt-1 text-xs text-slate-500">Leave it empty to get a suggestion after the image is read. You can write it on the next page.</p>
+                <p className="mt-1 text-xs text-slate-600">Leave it empty to get a suggestion after the image is read. You can write it on the next page.</p>
               </div>
             ) : null}
             <SubmitButton className={btnPrimary} disabled={Boolean(fileError) || !fileInfo} pending="Reading your file… this can take up to a minute">

@@ -45,7 +45,7 @@ export default async function LedgerPage() {
         <p className="text-sm text-slate-600">
           For every approved piece: each claim, the approved fact that backs it (as it was at approval), and who approved it. If a fact expires, changes or is removed, every piece that relies on it is re-flagged.
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-600">
           Checked automatically whenever a fact changes and whenever a list or dashboard page opens{lastChecked ? `. Last check: ${fmtDate(lastChecked)}` : ""}. There is no background job in this demo.
         </p>
       </div>
@@ -100,7 +100,7 @@ export default async function LedgerPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded bg-tint px-1.5 py-0.5 font-mono text-xs text-teal">{id}</span>
                         <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}>{state}</span>
-                        {current ? <span className="text-xs text-slate-500">valid until {current.expires_on}</span> : null}
+                        {current ? <span className="text-xs text-slate-600">valid until {current.expires_on}</span> : null}
                       </div>
                       <p className="mt-1 text-slate-900">{current?.statement ?? list[0].fact_statement}</p>
                       <p className="mt-1 text-xs text-slate-600">
@@ -131,7 +131,7 @@ export default async function LedgerPage() {
                       <Link href={`/drafts/${d.id}`} className="font-semibold text-navy underline-offset-2 hover:underline">
                         {d.title}
                       </Link>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
                         <StatusBadge s={d.status} />
                         <span>
                           approved by {d.approved_by || "a reviewer"} · {d.approved_at ? fmtDate(d.approved_at) : ""}

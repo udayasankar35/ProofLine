@@ -126,11 +126,11 @@ export default function AboutPage() {
       <Card title="This deployment">
         <dl className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-500">Data store</dt>
+            <dt className="text-xs uppercase tracking-wide text-slate-600">Data store</dt>
             <dd>{getStore().mode === "supabase" ? "Supabase (Postgres)" : "In-memory demo store"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-500">AI claim check and image reading</dt>
+            <dt className="text-xs uppercase tracking-wide text-slate-600">AI claim check and image reading</dt>
             <dd>{aiConfigured() ? `On · ${aiProvider()} · ${aiModel()}` : "Off · rules-only mode"}</dd>
           </div>
         </dl>

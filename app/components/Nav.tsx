@@ -46,7 +46,7 @@ export default async function Nav() {
             <span className="text-slate-400" aria-hidden>
               |
             </span>
-            <span className="text-xs text-slate-500">Switch to</span>
+            <span className="text-xs text-slate-600">Switch to</span>
             {USERS.filter((u) => u.id !== user.id).map((u) => (
               <form key={u.id} action={loginAs}>
                 <input type="hidden" name="user_id" value={u.id} />
@@ -56,7 +56,7 @@ export default async function Nav() {
               </form>
             ))}
             <form action={logout}>
-              <button className="rounded px-2 py-1 text-xs text-slate-500 underline hover:text-slate-800">Leave demo</button>
+              <button className="rounded px-2 py-1 text-xs text-slate-600 underline hover:text-slate-800">Leave demo</button>
             </form>
           </div>
         ) : null}

@@ -77,7 +77,7 @@ export default async function DraftPage({
           <StatusBadge s={draft.status} />
           {draft.is_sample ? <span className="rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">Sample history</span> : null}
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-600">
           {draft.channel} · {SOURCE_LABEL[draft.source_type]}
           {draft.source_name ? ` (${draft.source_name})` : ""} · revision {draft.rev} · updated {fmtDate(draft.updated_at)}
         </p>
@@ -88,7 +88,7 @@ export default async function DraftPage({
           <li
             key={s}
             aria-current={i === step ? "step" : undefined}
-            className={`rounded-full border px-3 py-1 ${i < step ? "border-teal bg-tint text-teal" : i === step ? "border-navy bg-navy text-white" : "border-slate-200 bg-white text-slate-500"}`}
+            className={`rounded-full border px-3 py-1 ${i < step ? "border-teal bg-tint text-teal" : i === step ? "border-navy bg-navy text-white" : "border-slate-200 bg-white text-slate-600"}`}
           >
             {i + 1}. {s}
           </li>
@@ -132,7 +132,7 @@ export default async function DraftPage({
                       </a>
                     </>
                   ) : (
-                    <span className="text-slate-500"> · the original file is no longer stored (files are kept for 3 days)</span>
+                    <span className="text-slate-600"> · the original file is no longer stored (files are kept for 3 days)</span>
                   )}
                 </p>
                 {draft.source_type === "image" && file ? (
@@ -146,7 +146,7 @@ export default async function DraftPage({
                     <form action={setAltText} className="space-y-2">
                       <input type="hidden" name="draft_id" value={draft.id} />
                       <label htmlFor="alt" className="block font-medium text-slate-800">
-                        Alt text <span className="font-normal text-slate-500">(required before review)</span>
+                        Alt text <span className="font-normal text-slate-600">(required before review)</span>
                       </label>
                       <textarea id="alt" name="alt" rows={2} maxLength={300} defaultValue={draft.alt_text} className={inputCls} placeholder="One plain sentence that says what the image shows" />
                       {visual?.suggested_alt ? (
@@ -220,7 +220,7 @@ export default async function DraftPage({
                 Disputed
               </span>
             </div>
-            <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+            <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-600">
               {checks[0] ? `Last check ${fmtDate(checks[0].created_at)}: ${checks[0].detail}` : "Not checked yet."}
             </p>
             {isFile && draft.body ? (
@@ -267,13 +267,13 @@ export default async function DraftPage({
                   <li key={e.id} className="rounded border border-slate-200 p-3 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${ENTRY_STYLE[e.status]}`}>{ENTRY_LABEL[e.status]}</span>
-                      <span className="text-xs text-slate-500">{e.basis}</span>
+                      <span className="text-xs text-slate-600">{e.basis}</span>
                     </div>
                     <p className="mt-1 font-mono text-slate-900">“{e.claim}”</p>
                     {e.fact_id ? (
                       <p className="mt-1 text-slate-700">
                         <span className="rounded bg-tint px-1.5 py-0.5 font-mono text-xs text-teal">{e.fact_id}</span> {e.fact_statement}
-                        <span className="block text-xs text-slate-500">
+                        <span className="block text-xs text-slate-600">
                           Source: {e.fact_source} · Owner: {e.fact_owner} · Valid until {e.fact_expires_on}
                         </span>
                       </p>
@@ -281,7 +281,7 @@ export default async function DraftPage({
                       <p className="mt-1 text-slate-700">{e.note}</p>
                     )}
                     {e.status_note ? <p className="mt-1 text-xs text-red-800">{e.status_note}</p> : null}
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-600">
                       Approved by {e.approved_by} · {fmtDate(e.approved_at)}
                     </p>
                   </li>
@@ -291,11 +291,11 @@ export default async function DraftPage({
           ) : null}
 
           <Card title={`Discussion (${comments.length})`}>
-            {comments.length === 0 ? <p className="text-sm text-slate-500">No comments yet.</p> : null}
+            {comments.length === 0 ? <p className="text-sm text-slate-600">No comments yet.</p> : null}
             <ul className="space-y-3">
               {comments.map((c) => (
                 <li key={c.id} className="rounded bg-slate-50 px-3 py-2 text-sm">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600">
                     {c.author_name} ({c.author_role}) · {fmtDate(c.created_at)}
                   </p>
                   <p className="text-slate-800">{c.body}</p>
@@ -319,7 +319,7 @@ export default async function DraftPage({
                   <span>
                     <span className="font-medium text-navy">Revision {r.rev}</span> · {r.note}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-600">
                     {r.actor_name} · {fmtDate(r.created_at)}
                   </span>
                 </li>

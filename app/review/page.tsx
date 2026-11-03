@@ -27,7 +27,7 @@ export default async function ReviewPage() {
         >
           <div className="min-w-0">
             <p className="truncate font-semibold text-navy">{d.title}</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               {d.channel} · revision {d.rev} · {fmtDate(d.updated_at)}
             </p>
           </div>

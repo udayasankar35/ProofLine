@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </main>
         <footer className="border-t border-slate-200 bg-white">
-          <div className="mx-auto max-w-6xl space-y-1 px-4 py-4 text-xs text-slate-500">
+          <div className="mx-auto max-w-6xl space-y-1 px-4 py-4 text-xs text-slate-600">
             <p>
               Demo with fictional brand data (AquaPulse). ProofLine supports review and is not legal advice. A human reviewer always makes the final call.
             </p>

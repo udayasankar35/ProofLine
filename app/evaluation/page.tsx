@@ -18,14 +18,14 @@ const ratio = (tp: number, fp: number, fn: number) => ({ p: tp + fp === 0 ? null
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-bold text-navy">{value}</p>
       <p className="mt-1 text-xs text-slate-600">{sub}</p>
     </div>
   );
 }
 
-const th = "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500";
+const th = "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600";
 const td = "px-3 py-2 text-sm text-slate-800";
 
 export default async function EvaluationPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
@@ -63,7 +63,7 @@ export default async function EvaluationPage({ searchParams }: { searchParams: P
       </div>
 
       <Card title="Fixed rules and keyword matching, check by check">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Scrollable table" tabIndex={0}>
           <table className="min-w-full divide-y divide-slate-200">
             <caption className="sr-only">Precision and recall for each check, now and in the first run before fixes</caption>
             <thead>
@@ -147,7 +147,7 @@ export default async function EvaluationPage({ searchParams }: { searchParams: P
           </ul>
         ) : null}
         {rulesRuns.length ? (
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 overflow-x-auto" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="min-w-full divide-y divide-slate-200">
               <caption className="sr-only">Recent regression runs</caption>
               <thead>
@@ -201,7 +201,7 @@ export default async function EvaluationPage({ searchParams }: { searchParams: P
         </p>
         <div className="mt-3">
           <AiEvalRunner configured={aiConfigured()} activeRunId={active?.id ?? null} total={aiCases} />
-          <p className="mt-2 text-xs text-slate-500">Uses about {aiCases} AI requests. Limited to 2 runs a day and 10 minutes apart to protect the free AI quota. Results shift a little from run to run.</p>
+          <p className="mt-2 text-xs text-slate-600">Uses about {aiCases} AI requests. Limited to 2 runs a day and 10 minutes apart to protect the free AI quota. Results shift a little from run to run.</p>
         </div>
         {ai ? <AiResults ai={ai} /> : <p className="mt-4 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">No AI evaluation has been run yet. Press the button to measure it.</p>}
       </Card>
@@ -213,7 +213,7 @@ export default async function EvaluationPage({ searchParams }: { searchParams: P
             {wrong.map((r) => (
               <li key={r.id} className="rounded-md border border-slate-200 p-3">
                 <p className="text-slate-900">
-                  <span className="font-mono text-xs text-slate-500">{r.id} · {r.set}</span> “{r.text}”
+                  <span className="font-mono text-xs text-slate-600">{r.id} · {r.set}</span> “{r.text}”
                 </p>
                 <ul className="mt-1 list-disc pl-5 text-slate-700">
                   {r.missed.map((x, i) => (
@@ -261,9 +261,9 @@ function AiResults({ ai }: { ai: FinishedAiRun }) {
         Latest finished run: <strong>{fmtDate(run.finished_at)}</strong>, {metrics.cases} drafts{metrics.errors ? `, ${metrics.errors} could not be scored because the AI request failed` : ""}. Model: {metrics.models.join(", ") || run.model}.
       </p>
       {ai.rescored ? (
-        <p className="text-xs text-slate-500">The AI’s answers were saved when the run was made. They are scored with the checking code that is deployed now, so these figures stay honest after a code change, without new AI requests.</p>
+        <p className="text-xs text-slate-600">The AI’s answers were saved when the run was made. They are scored with the checking code that is deployed now, so these figures stay honest after a code change, without new AI requests.</p>
       ) : null}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" role="region" aria-label="Scrollable table" tabIndex={0}>
         <table className="min-w-full divide-y divide-slate-200">
           <caption className="sr-only">AI step compared with keyword matching on the same drafts (precision / recall)</caption>
           <thead>
@@ -294,7 +294,7 @@ function AiResults({ ai }: { ai: FinishedAiRun }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">Each cell reads precision / recall. Only claim checks (R-4) are compared, because the other rules do not use the AI.</p>
+      <p className="text-xs text-slate-600">Each cell reads precision / recall. Only claim checks (R-4) are compared, because the other rules do not use the AI.</p>
       {metrics.calibration.length ? (
         <div>
           <h3 className="text-sm font-semibold text-navy">Do the confidence labels mean something?</h3>
@@ -315,7 +315,7 @@ function AiResults({ ai }: { ai: FinishedAiRun }) {
             {failures.map((f) => (
               <li key={f.id} className="rounded-md border border-slate-200 p-3">
                 <p className="text-slate-900">
-                  <span className="font-mono text-xs text-slate-500">{f.id}</span> “{f.text}”
+                  <span className="font-mono text-xs text-slate-600">{f.id}</span> “{f.text}”
                 </p>
                 <ul className="mt-1 list-disc pl-5 text-slate-700">
                   {f.missed.map((x, i) => (

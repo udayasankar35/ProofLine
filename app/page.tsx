@@ -57,15 +57,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
               <input type="hidden" name="user_id" value={u.id} />
               <p className="text-xs font-semibold uppercase tracking-wide text-teal">{ROLE_COPY[u.role].label}</p>
               <p className="mt-1 text-lg font-semibold text-navy">{u.name}</p>
-              <p className="text-sm text-slate-500">{u.title}</p>
+              <p className="text-sm text-slate-600">{u.title}</p>
               <p className="mt-3 flex-1 text-sm text-slate-700">{ROLE_COPY[u.role].what}</p>
               <dl className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 <div className="flex flex-wrap gap-x-2">
-                  <dt className="text-slate-500">Email</dt>
+                  <dt className="text-slate-600">Email</dt>
                   <dd className="select-all font-mono">{DEMO_LOGINS[u.id].email}</dd>
                 </div>
                 <div className="flex flex-wrap gap-x-2">
-                  <dt className="text-slate-500">Password</dt>
+                  <dt className="text-slate-600">Password</dt>
                   <dd className="select-all font-mono">{DEMO_LOGINS[u.id].password}</dd>
                 </div>
               </dl>

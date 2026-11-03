@@ -35,7 +35,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
           This is what every draft is checked against. A claim is only “supported” by a fact that is still in date.
           {isAdmin ? " You can edit facts and terms here." : " Switch to Asha (Admin) to edit."}
         </p>
-        <p className="mt-1 text-xs text-slate-500">This is your own copy of the demo records. Changes here affect only your session, and the admin can restore the original set at any time.</p>
+        <p className="mt-1 text-xs text-slate-600">This is your own copy of the demo records. Changes here affect only your session, and the admin can restore the original set at any time.</p>
       </div>
       <ErrorBanner message={error} />
       <NoticeBanner message={notice} />
@@ -63,11 +63,11 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded bg-tint px-1.5 py-0.5 font-mono text-xs text-teal">{f.id}</span>
                   <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${st.cls}`}>{st.label}</span>
-                  <span className="text-xs text-slate-500">valid until {f.expires_on}</span>
+                  <span className="text-xs text-slate-600">valid until {f.expires_on}</span>
                   {usedBy(f.id) > 0 ? <span className="text-xs text-slate-600">· used by {usedBy(f.id)} approved piece{usedBy(f.id) === 1 ? "" : "s"}</span> : null}
                 </div>
                 <p className="mt-1 text-slate-900">{f.statement}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600">
                   Source: {f.source} · Owner: {f.owner}
                 </p>
                 {isAdmin ? (
@@ -118,7 +118,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
                     <form action={deleteFact} className="border-t border-slate-200 p-3">
                       <input type="hidden" name="fact_id" value={f.id} />
                       <SubmitButton className={btnDanger}>Remove {f.id}</SubmitButton>
-                      <p className="mt-1 text-xs text-slate-500">Approved pieces that rely on this fact are re-flagged for re-review.</p>
+                      <p className="mt-1 text-xs text-slate-600">Approved pieces that rely on this fact are re-flagged for re-review.</p>
                     </form>
                   </details>
                 ) : null}
@@ -173,7 +173,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
           {terms.map((t) => (
             <li key={t.id}>
               <span className="mr-2 rounded bg-tint px-1.5 py-0.5 font-mono text-xs text-teal">{t.id}</span>
-              <strong>“{t.term}”</strong> → {t.replacement ? `“${t.replacement}”` : "remove"} <span className="text-slate-500">· {t.reason}</span>
+              <strong>“{t.term}”</strong> → {t.replacement ? `“${t.replacement}”` : "remove"} <span className="text-slate-600">· {t.reason}</span>
             </li>
           ))}
         </ul>

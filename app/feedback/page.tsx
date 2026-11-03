@@ -43,13 +43,13 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Pro
             </fieldset>
             <div>
               <label htmlFor="confusing" className="mb-1 block text-sm font-medium text-slate-800">
-                What was confusing or slow? <span className="font-normal text-slate-500">(optional)</span>
+                What was confusing or slow? <span className="font-normal text-slate-600">(optional)</span>
               </label>
               <textarea id="confusing" name="confusing" rows={3} maxLength={600} className={inputCls} />
             </div>
             <div>
               <label htmlFor="wanted" className="mb-1 block text-sm font-medium text-slate-800">
-                What did you expect that was missing? <span className="font-normal text-slate-500">(optional)</span>
+                What did you expect that was missing? <span className="font-normal text-slate-600">(optional)</span>
               </label>
               <textarea id="wanted" name="wanted" rows={3} maxLength={600} className={inputCls} />
             </div>

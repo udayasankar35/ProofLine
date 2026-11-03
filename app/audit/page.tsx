@@ -45,11 +45,11 @@ export default async function AuditPage() {
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p>
                     <span className="font-medium text-navy">{LABEL[e.action] ?? e.action}</span>{" "}
-                    <span className="text-slate-500">
+                    <span className="text-slate-600">
                       by {e.actor_name} ({e.actor_role})
                     </span>
                   </p>
-                  <p className="text-xs text-slate-500">{fmtDate(e.created_at)}</p>
+                  <p className="text-xs text-slate-600">{fmtDate(e.created_at)}</p>
                 </div>
                 <p className="text-slate-700">{e.detail}</p>
               </li>
