@@ -6,7 +6,7 @@ Everything below can be re-run from a fresh clone (see the README). Numbers are 
 
 | Layer | What | How to run | Count |
 |---|---|---|---|
-| Unit | rules, fixes, claim verification, AI-reply parsing, visual checks, ledger, extraction, insights, evaluation dataset and regression gate | `npm test` | 77 tests |
+| Unit | rules, fixes, claim verification, AI-reply parsing, visual checks, ledger, extraction, insights, evaluation dataset and regression gate | `npm test` | 78 tests |
 | Evaluation | 129 labelled drafts scored for precision and recall | `npm run eval`, `/evaluation` page | 129 drafts |
 | End to end | a real browser (Playwright) against a running deployment | `python3 tests/<script>.py <url>` | 5 scripts |
 | Gate | unit tests plus "nothing worse than baseline" before every build | automatic (`prebuild`) | |
