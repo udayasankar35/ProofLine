@@ -2,6 +2,8 @@ import { requireUser } from "@/lib/session";
 import NewDraftForm from "@/app/components/NewDraftForm";
 import { Card, ErrorBanner } from "@/app/components/ui";
 
+export const metadata = { title: "New draft" };
+
 export const maxDuration = 120;
 
 export default async function NewDraftPage({ searchParams }: { searchParams: Promise<{ error?: string; tab?: string }> }) {

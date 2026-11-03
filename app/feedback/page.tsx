@@ -3,6 +3,8 @@ import SubmitButton from "@/app/components/SubmitButton";
 import { Card, ErrorBanner, NoticeBanner, btnPrimary, inputCls } from "@/app/components/ui";
 import { getCurrentUser } from "@/lib/session";
 
+export const metadata = { title: "Give feedback" };
+
 export default async function FeedbackPage({ searchParams }: { searchParams: Promise<{ error?: string; notice?: string }> }) {
   const { error, notice } = await searchParams;
   const user = await getCurrentUser();

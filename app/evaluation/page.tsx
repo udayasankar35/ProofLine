@@ -10,6 +10,8 @@ import { Card, ErrorBanner, NoticeBanner, btnSecondary, fmtDate } from "../compo
 import { runRegression } from "./actions";
 import AiEvalRunner from "./AiEvalRunner";
 
+export const metadata = { title: "Evaluation" };
+
 export const maxDuration = 60;
 
 const pct = (x: number | null | undefined) => (x === null || x === undefined ? "n/a" : `${(x * 100).toFixed(0)}%`);

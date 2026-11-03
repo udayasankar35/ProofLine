@@ -6,6 +6,8 @@ import { requireUser } from "@/lib/session";
 import { db, todayIso } from "@/lib/store";
 import type { Draft, LedgerEntry } from "@/lib/types";
 
+export const metadata = { title: "Evidence ledger" };
+
 const STATE: Record<string, { label: string; cls: string }> = {
   ok: { label: "Evidence valid", cls: "border-emerald-300 bg-emerald-50 text-emerald-800" },
   exception: { label: "Reviewer exception", cls: "border-violet-300 bg-violet-50 text-violet-800" },

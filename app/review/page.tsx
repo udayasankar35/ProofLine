@@ -6,6 +6,8 @@ import { db } from "@/lib/store";
 import type { Draft, Finding } from "@/lib/types";
 import { Card, StatusBadge, fmtDate } from "../components/ui";
 
+export const metadata = { title: "Review queue" };
+
 export default async function ReviewPage() {
   const { user, sessionId } = await requireUser();
   const store = await db();

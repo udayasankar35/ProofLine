@@ -13,6 +13,8 @@ import { db } from "@/lib/store";
 import type { AuditEntry, Comment, Draft, DraftFile, Finding, LedgerEntry, Revision } from "@/lib/types";
 import { parseVisual } from "@/lib/visual";
 
+export const metadata = { title: "Draft" };
+
 export const maxDuration = 120;
 
 const STEPS = ["Check", "Resolve", "Review", "Approved"];

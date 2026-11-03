@@ -6,6 +6,8 @@ import { summarize } from "@/lib/status";
 import type { Draft, Finding } from "@/lib/types";
 import { Card, StatusBadge, btnPrimary, fmtDate } from "../components/ui";
 
+export const metadata = { title: "Drafts" };
+
 export default async function DraftsPage() {
   const { user, sessionId } = await requireUser();
   const store = await db();

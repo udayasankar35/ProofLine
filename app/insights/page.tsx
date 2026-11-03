@@ -6,6 +6,8 @@ import { fmtHours, computeInsights } from "@/lib/insights";
 import { sweepWorkspace } from "@/lib/ledger";
 import { requireUser } from "@/lib/session";
 
+export const metadata = { title: "Governance insights" };
+
 export default async function InsightsPage({ searchParams }: { searchParams: Promise<{ scope?: string; notice?: string }> }) {
   const { sessionId } = await requireUser();
   const { scope, notice } = await searchParams;

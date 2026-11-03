@@ -7,6 +7,8 @@ import { requireUser } from "@/lib/session";
 import { db, todayIso } from "@/lib/store";
 import type { Draft, Fact, LedgerEntry } from "@/lib/types";
 
+export const metadata = { title: "Guidelines and facts" };
+
 function factState(f: Fact, today: string): { label: string; cls: string } {
   if (f.expires_on < today) return { label: "Expired", cls: "border-red-300 bg-red-50 text-red-800" };
   const soon = new Date(today);

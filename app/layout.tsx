@@ -10,7 +10,7 @@ import { getStore } from "@/lib/store";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ProofLine · No claim goes live without a source",
+  title: { default: "ProofLine · No claim goes live without a source", template: "%s · ProofLine" },
   description:
     "ProofLine checks marketing copy against approved brand guidelines and facts before publication, explains every issue, suggests fixes, and leaves approval to a human reviewer.",
 };

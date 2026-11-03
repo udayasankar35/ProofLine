@@ -3,6 +3,8 @@ import { db } from "@/lib/store";
 import type { AuditEntry } from "@/lib/types";
 import { Card, fmtDate } from "../components/ui";
 
+export const metadata = { title: "Audit trail" };
+
 const LABEL: Record<string, string> = {
   login: "Entered the demo",
   draft_created: "Draft created",

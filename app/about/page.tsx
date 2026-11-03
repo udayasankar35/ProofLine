@@ -3,6 +3,8 @@ import { aiConfigured, aiModel, aiProvider } from "@/lib/ai";
 import { getStore } from "@/lib/store";
 import { Card } from "../components/ui";
 
+export const metadata = { title: "How it works and privacy" };
+
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
