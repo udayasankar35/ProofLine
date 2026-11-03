@@ -14,7 +14,7 @@ const rangeOf = (text: string, quote: string): [number, number] | null => {
 /**
  * The text stage of a check, shared by the app and by the evaluation suite so both run exactly the same code.
  * - `claims === null`: no AI claims, so the keyword matcher does the claim matching (rules-only mode).
- * - otherwise: fixed rules, plus the AI's claims verified by code, plus a keyword safety net for ranking and proof wording.
+ * - otherwise: fixed rules, plus the AI's claims verified by code, plus a keyword safety net for ranking, proof, figure and comparison wording.
  */
 export function textStage(base: Omit<RuleContext, "includeClaims" | "claimKinds">, claims: AiClaim[] | null): { findings: RawFinding[]; rejected: number } {
   if (claims === null) return { findings: runRules({ ...base, includeClaims: true }), rejected: 0 };
@@ -26,10 +26,11 @@ export function textStage(base: Omit<RuleContext, "includeClaims" | "claimKinds"
     return r !== null && dr.some(([a, b]) => r[0] >= a && r[1] <= b);
   };
   const v = verifyClaims({ text: base.text, claims: claims.filter((c) => !inDisclaimer(c.quote)), facts: base.facts, guidelines: base.guidelines, today: base.today, takenQuotes: pre.map((f) => f.quote) });
-  // Rankings and proof claims ("#1", "clinically proven") are high risk and have exact patterns, so the keyword matcher
-  // still covers them if the AI missed one. Anything the AI already covered wins.
+  // Rankings, proof, figures and comparisons ("#1", "clinically proven", "9 out of 10", "better than") have exact patterns,
+  // so the keyword matcher still covers them if the AI missed one. Anything the AI already covered wins.
+  // (Added after the first live AI evaluation, which showed the AI missing some figures and comparisons; see docs/EVALUATION.md.)
   const aiRanges = v.findings.map((f) => rangeOf(base.text, f.quote)).filter((r): r is [number, number] => r !== null);
-  const safety = runRules({ ...base, includeClaims: true, claimKinds: ["ranking", "proof"] })
+  const safety = runRules({ ...base, includeClaims: true, claimKinds: ["ranking", "proof", "number", "comparison"] })
     .filter((f) => f.rule_id === "R-4" && f.origin === "fallback")
     .filter((f) => {
       const r = rangeOf(base.text, f.quote);

@@ -93,3 +93,12 @@ test("AI claims quoted from inside the disclaimer are dropped", () => {
   const { findings } = textStage(base(text), [{ quote: "treat, cure or prevent any disease", kind: "other", fact_id: null, relation: "none" }]);
   assert.equal(findings.length, 0);
 });
+
+test("safety net: figures and comparisons the AI missed are still flagged, and what the AI covered is not doubled", () => {
+  const missed = textStage(base("Top-rated by 9 out of 10 athletes. Up to 25% off this week only."), []).findings.filter((f) => f.rule_id === "R-4");
+  assert.ok(missed.some((f) => /9 out of 10/.test(f.quote)), JSON.stringify(missed.map((f) => f.quote)));
+  assert.ok(missed.some((f) => /25/.test(f.quote)));
+  const text = "Our 12 athletes say AquaPulse is better than rival brands.";
+  const covered = textStage(base(text), [{ quote: "12 athletes", kind: "number", fact_id: "F-06", relation: "supports" }]).findings.filter((f) => f.rule_id === "R-4");
+  assert.equal(covered.filter((f) => /12 athletes/.test(f.quote)).length, 1);
+});
