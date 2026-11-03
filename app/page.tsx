@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loginAs, signIn } from "./actions";
 import { getCurrentUser, homeFor } from "@/lib/session";
 import { DEMO_LOGINS, USERS } from "@/lib/seed";
+import PasswordInput from "./components/PasswordInput";
 import SubmitButton from "./components/SubmitButton";
 import { ErrorBanner, NoticeBanner, btnPrimary, btnSecondary, inputCls } from "./components/ui";
 
@@ -93,7 +94,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
             <label htmlFor="password" className="block text-sm font-medium text-slate-800">
               Password
             </label>
-            <input id="password" name="password" type="password" autoComplete="current-password" required className={`${inputCls} mt-1`} />
+            <PasswordInput id="password" name="password" autoComplete="current-password" className={inputCls} />
           </div>
           <SubmitButton className={btnPrimary} pending="Signing in…">
             Sign in

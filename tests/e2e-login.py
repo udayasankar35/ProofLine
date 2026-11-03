@@ -22,25 +22,34 @@ with sync_playwright() as pw:
         expect(page.get_by_text(email)).to_be_visible()
     expect(page.get_by_text("proofline-demo").first).to_be_visible()
 
+    # the eye button shows and hides what was typed
+    pw = page.get_by_label("Password", exact=True)
+    pw.fill("proofline-demo")
+    expect(pw).to_have_attribute("type", "password")
+    page.get_by_role("button", name="Show password").click()
+    expect(pw).to_have_attribute("type", "text")
+    page.get_by_role("button", name="Hide password").click()
+    expect(pw).to_have_attribute("type", "password")
+    pw.fill("")
     # wrong password: calm error, still on the home page
     page.get_by_label("Email").fill("devon@aquapulse.demo")
-    page.get_by_label("Password").fill("wrong")
+    page.get_by_label("Password", exact=True).fill("wrong")
     page.get_by_role("button", name="Sign in").click()
     expect(page.locator("main [role=alert]").first).to_contain_text("do not match a demo account")
-    expect(page.get_by_label("Password")).to_have_value("")  # the form is reset once the action has finished
+    expect(page.get_by_label("Password", exact=True)).to_have_value("")  # the form is reset once the action has finished
     assert urlparse(page.url).path == "/", page.url
 
     # unknown email
     page.get_by_label("Email").fill("nobody@example.com")
-    page.get_by_label("Password").fill("proofline-demo")
+    page.get_by_label("Password", exact=True).fill("proofline-demo")
     page.get_by_role("button", name="Sign in").click()
     page.wait_for_timeout(1500)  # same message as before, so wait for the action to finish
     expect(page.locator("main [role=alert]").first).to_contain_text("do not match a demo account")
-    expect(page.get_by_label("Password")).to_have_value("")
+    expect(page.get_by_label("Password", exact=True)).to_have_value("")
 
     # correct credentials, with different capitalisation and spaces in the email
     page.get_by_label("Email").fill("  Elena@AquaPulse.demo ")
-    page.get_by_label("Password").fill("proofline-demo")
+    page.get_by_label("Password", exact=True).fill("proofline-demo")
     page.get_by_role("button", name="Sign in").click()
     expect(page).to_have_url(re.compile(r"/review$"))
     expect(page.get_by_role("heading", name="Review queue")).to_be_visible()
@@ -49,7 +58,7 @@ with sync_playwright() as pw:
     page.get_by_role("button", name="Leave demo").click()
     expect(page).to_have_url(re.compile(r"/$"))
     page.get_by_label("Email").fill("devon@aquapulse.demo")
-    page.get_by_label("Password").fill("proofline-demo")
+    page.get_by_label("Password", exact=True).fill("proofline-demo")
     page.get_by_role("button", name="Sign in").click()
     expect(page).to_have_url(re.compile(r"/drafts$"))
 
