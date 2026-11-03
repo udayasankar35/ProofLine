@@ -15,6 +15,8 @@ export async function GET(req: Request) {
     const r = await sweepAllWorkspaces();
     return Response.json({ ok: true, ...r, at: nowIso() });
   } catch (e) {
-    return Response.json({ ok: false, error: (e as Error).message.slice(0, 200), at: nowIso() }, { status: 500 });
+    // Reported in the body (ok: false) rather than as a bare 500, so the reason can be read from the response.
+    console.error("sweep failed", e);
+    return Response.json({ ok: false, error: (e as Error).message.slice(0, 300), at: nowIso() });
   }
 }

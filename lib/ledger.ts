@@ -137,18 +137,21 @@ export async function sweepWorkspace(sessionId: string): Promise<SweepResult> {
 }
 
 /**
- * The daily background check: re-evaluates every workspace that has approved or re-flagged pieces.
+ * The daily background check: re-evaluates every workspace that has ledger lines.
  * Called by the scheduled job (see vercel.json); the on-demand sweeps still run after a fact change and on page loads.
+ * One query finds the workspaces (only those with ledger lines can have anything to re-flag); a time budget keeps it inside the function limit.
  */
-export async function sweepAllWorkspaces(limit = 300): Promise<{ workspaces: number; reflagged: number; cleared: number; failed: number }> {
+export async function sweepAllWorkspaces(limit = 300, budgetMs = 40_000): Promise<{ workspaces: number; reflagged: number; cleared: number; failed: number; truncated: boolean }> {
+  const started = Date.now();
   const store = await db();
-  const rows = [
-    ...(await store.select<Pick<Draft, "session_id">>("drafts", { status: "approved" }, undefined, "session_id", 2000)),
-    ...(await store.select<Pick<Draft, "session_id">>("drafts", { status: "reflagged" }, undefined, "session_id", 2000)),
-  ];
+  const rows = await store.select<Pick<LedgerEntry, "session_id">>("ledger_entries", undefined, undefined, "session_id", 5000);
   const ids = Array.from(new Set(rows.map((r) => r.session_id))).slice(0, limit);
-  const total = { workspaces: ids.length, reflagged: 0, cleared: 0, failed: 0 };
+  const total = { workspaces: ids.length, reflagged: 0, cleared: 0, failed: 0, truncated: false };
   for (const id of ids) {
+    if (Date.now() - started > budgetMs) {
+      total.truncated = true;
+      break;
+    }
     try {
       const r = await sweepWorkspace(id);
       total.reflagged += r.reflagged.length;
