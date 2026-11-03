@@ -47,14 +47,15 @@ The demo logins are shown on the home page on purpose. Pick one (or type the ema
 
 **2. Evidence ledger and governance insights**
 - On approval, one **ledger line per claim**: the words, the approved fact behind it (a snapshot of its statement, source, owner and expiry), who approved it and when. Findings approved while still open are recorded as **reviewer exceptions**.
-- **Automatic re-flag**: when a fact expires, is edited or is removed, every approved piece that relied on it moves to *Re-review needed*. When the evidence is valid again it clears. The check runs after every fact change and whenever a list or dashboard page opens (no background job in this demo).
+- **Automatic re-flag**: when a fact expires, is edited or is removed, every approved piece that relied on it moves to *Re-review needed*. When the evidence is valid again it clears. The check runs after every fact change, whenever a list or dashboard page opens, and **once a day from a scheduled background job** (Vercel Cron, about 02:00 IST; `/api/cron/sweep`). It sends no notifications yet.
+- **CSV import of approved facts** (admin): upload a CSV with `statement`, `source`, `expires_on` (and optional `owner`, `keywords`); good rows are added, every skipped row is explained, repeats are skipped. A sample file is on the page.
 - **Insights**: most-triggered rules, most-disputed findings, time to approval, facts about to expire (with how many approved pieces rely on each). Empty state, *all* or *only my drafts*, and optional fictional sample history so the dashboard can be seen with data.
 
 **3. Reliability and evaluation suite**
 - **129 labelled drafts** (82 typical violations, 16 hard paraphrases, 31 clean controls) with expected findings written from the guidelines, not from the engine's output.
 - **Evaluation page**: precision and recall per check, the first run before any fix next to the current figures, a one-click **regression run** against a stored baseline, and an **AI evaluation** that scores the AI claim step next to keyword matching on the same drafts. Confidence labels are checked too: are "Medium" findings really right more often than "Low" ones?
 - **Confidence labels on every finding**: High (fixed rule), Medium (AI matched a specific fact, verified by code), Low (no fact, keyword guess, or image estimate). Each finding also shows a measured "how often is this check right" line.
-- **Gates**: `npm test` (78 tests, including dataset integrity and "no check is worse than the baseline") runs automatically before every build, so a regression cannot be deployed.
+- **Gates**: `npm test` (89 tests, including dataset integrity and "no check is worse than the baseline") runs automatically before every build, so a regression cannot be deployed.
 
 Measured results (full detail and honest caveats in [docs/EVALUATION.md](docs/EVALUATION.md)):
 
@@ -106,7 +107,7 @@ npm run dev                  # http://localhost:3000
 
 With no `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` the app uses an in-memory store (it resets on restart). With no `AI_API_KEY` it runs rules-only: everything works, uploads of Word and text-layer PDFs work, and image reading says the AI reader is not available.
 
-Environment variables (see `.env.example`): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER` (`gemini` | `openai` | `anthropic`; image reading needs `gemini`), `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` (OpenAI-compatible endpoints), `AI_SESSION_CAP` (default 20 AI calls per visitor), `AI_DAILY_CAP` (default 400 per day). The AI key is read on the server only.
+Environment variables (see `.env.example`): `CRON_SECRET` (optional: if set, only the scheduled job may call `/api/cron/sweep`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER` (`gemini` | `openai` | `anthropic`; image reading needs `gemini`), `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` (OpenAI-compatible endpoints), `AI_SESSION_CAP` (default 20 AI calls per visitor), `AI_DAILY_CAP` (default 400 per day). The AI key is read on the server only.
 
 ## Deploy
 
@@ -117,7 +118,7 @@ Environment variables (see `.env.example`): `SUPABASE_URL`, `SUPABASE_SERVICE_RO
 ## Tests
 
 ```bash
-npm test             # 78 unit tests, includes the evaluation dataset and the regression gate
+npm test             # 89 unit tests, includes the evaluation dataset and the regression gate
 npm run eval         # prints precision and recall per check (add -- --failures to list wrong drafts)
 ```
 
@@ -141,7 +142,7 @@ To test the AI paths without a key: `node tests/mock-ai.mjs` (a stand-in for the
 - Keyword matching only recognises claims with a clear shape; the AI step reads the whole draft but can miss or misjudge a claim. That is why a reviewer always decides.
 - Image checks (contrast, small text, palette) are AI estimates and always need a human check. Images are not in the evaluation set.
 - Fixes edit ProofLine's text copy, not the original file. Alt text inside a PDF cannot be verified. Word text boxes, comments and tracked changes are not read. Old .doc, GIF and HEIC files are not supported.
-- Vision needs the Gemini provider. Files are kept for 3 days. There is no background job: the ledger is re-checked when a fact changes and when pages open.
+- Vision needs the Gemini provider. Files are kept for 3 days. The ledger is re-checked when a fact changes, when pages open and once a day by the scheduled job (the free hosting plan allows one run a day; no notifications yet). Importing facts needs a CSV file; Word or PDF import of facts is not built.
 - Demo sign-in is role-picking with public credentials, not real accounts. ProofLine supports review; it is not legal advice.
 
 ## What is next

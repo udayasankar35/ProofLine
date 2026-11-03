@@ -1,6 +1,6 @@
 # ProofLine: technical architecture and implementation summary
 
-ProofLine is one Next.js 16 application (App Router, server actions) with a Postgres database (Supabase) and one external AI provider (Gemini by default). There is no separate backend service, queue or cron job. Everything runs in Vercel serverless functions.
+ProofLine is one Next.js 16 application (App Router, server actions) with a Postgres database (Supabase) and one external AI provider (Gemini by default). There is no separate backend service or queue; the only scheduled work is one daily Vercel Cron call (see the evidence ledger section). Everything runs in Vercel serverless functions.
 
 ```
 Browser ── pages and forms (React 19, Tailwind) ──┐
@@ -46,7 +46,7 @@ The evaluation suite calls the **same `textStage`**, so what is measured is what
 
 ## Evidence ledger and re-flag (`lib/ledger.ts`)
 
-At approval, `buildLedger` writes one row per finding: a supported R-4 claim becomes **evidence** (a snapshot of the fact's statement, source, owner and expiry, plus the approver and time); anything else the reviewer approved while it was open becomes a **reviewer exception**. `sweepWorkspace(session)` evaluates each row against the visitor's current facts (`ok`, `expired`, `changed`, `removed`, `exception`), moves approved drafts with a broken row to `reflagged`, and moves them back when every row is valid again. It runs after every fact change and when list and dashboard pages open. This is deliberate: no cron job is needed, at the price that a page must be opened for the sweep to run (declared on the Ledger and About pages).
+At approval, `buildLedger` writes one row per finding: a supported R-4 claim becomes **evidence** (a snapshot of the fact's statement, source, owner and expiry, plus the approver and time); anything else the reviewer approved while it was open becomes a **reviewer exception**. `sweepWorkspace(session)` evaluates each row against the visitor's current facts (`ok`, `expired`, `changed`, `removed`, `exception`), moves approved drafts with a broken row to `reflagged`, and moves them back when every row is valid again. It runs after every fact change and when list and dashboard pages open. A daily Vercel Cron job (`vercel.json`, `/api/cron/sweep`, about 02:00 IST) also runs `sweepAllWorkspaces`, so a piece is re-flagged within a day even if nobody opens a page; the free hosting plan allows one run a day and the job sends no notifications yet. The on-demand sweeps remain so the flag appears immediately after a change. An optional `CRON_SECRET` restricts the endpoint to the scheduler (the sweep only recomputes statuses from existing data, so it is harmless without one, and is limited to one run a minute per instance) (declared on the Ledger and About pages).
 
 ## Workspaces (privacy by design)
 

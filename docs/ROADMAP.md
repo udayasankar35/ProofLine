@@ -7,8 +7,8 @@ What ProofLine does today is in the README. This is what comes next, in the orde
 **First of all: test with real people.** Five creators and two reviewers use ProofLine on their own copy while we watch where they stop (planned since Round 2, not done in Round 3). The feedback form and the scripted journeys are in place for it. What we learn changes the order of everything below.
 
 1. **Real accounts and teams.** Single sign-on (Google or Microsoft), organisations, invitations, roles per brand. Today's demo logins are public by design. *Why first:* nothing real can be piloted without it.
-2. **Connect the brand's own sources.** Import guidelines and facts from a document or a table, and show which approved fact each claim used. *Why:* the quality of every verdict depends on the facts, and typing them in does not scale.
-3. **A background re-check.** A scheduled job that sweeps approved content every night and sends a message ("3 approved pieces rely on a fact that expires next week"). Today the sweep runs when a fact changes or a page opens.
+2. **Connect the brand's own sources.** Import guidelines and facts from Word, PDF or a connected system (a CSV import of facts exists today), and show which approved fact each claim used. *Why:* the quality of every verdict depends on the facts, and typing them in does not scale.
+3. **Notifications from the background re-check.** A daily scheduled job already sweeps approved content (and on every fact change or page open). Next: send a message ("3 approved pieces rely on a fact that expires next week") and run it more often than the free hosting plan allows.
 4. **Inkloom AI provider.** The provider adapter already speaks the OpenAI-compatible API; add the Inkloom endpoint and run the evaluation against it.
 
 ## Next 90 days: better checking
@@ -27,7 +27,7 @@ What ProofLine does today is in the README. This is what comes next, in the orde
 
 ## What we deliberately did not do in Round 3
 
-- A scheduled background job. We chose an on-demand sweep (after every fact change and whenever a list or dashboard page opens) and declared the difference.
+- Notifications and a more frequent background job. A daily scheduled sweep exists; it sends nothing, and the free hosting plan allows one run a day.
 - Real authentication (out of scope for a public demo; planned first).
 - OCR in our own code (we use a vision model, which also estimates colours and text size).
 
